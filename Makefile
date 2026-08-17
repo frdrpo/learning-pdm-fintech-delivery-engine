@@ -1,13 +1,22 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync test-gh
+.PHONY: lint sync sync-deps test-gh
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
 	@mkdir -p $(GH_WF)
 	@cp $(PDM_WF)/*.yml $(GH_WF)/
 	@echo "Synced $(PDM_WF) -> $(GH_WF)"
+
+# Adopt dependency-version bumps into the canonical tree. Dependabot only scans
+# .github/workflows/ (standard GitHub Actions location), so after a dependabot
+# merge run this to copy the bumped execution copies back into canonical, then
+# 'make sync' to re-mirror. Run 'make lint' to confirm no drift.
+sync-deps:
+	@mkdir -p $(PDM_WF)
+	@cp $(GH_WF)/*.yml $(PDM_WF)/
+	@echo "Adopted $(GH_WF) version bumps into $(PDM_WF); run 'make sync' to re-mirror."
 
 # Validate workflow YAML syntax + expressions (no Docker required),
 # and fail if the GitHub execution copies have drifted from canonical.
