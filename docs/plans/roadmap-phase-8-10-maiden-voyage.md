@@ -1,6 +1,6 @@
 # Learning PDM: Delivery Engine — Roadmap (Phases 8–10: "What's Next")
 
-Status: planned (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`.
+Status: in-flight (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`. P8-T1 (first real gated promotion `develop` → `main`) merged as PR #84 (merge commit `e94d9ef`).
 
 ## 1. Purpose
 
