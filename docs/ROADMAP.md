@@ -135,13 +135,26 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 
 **Acceptance:** `make lint` green; exporter tested against the live repo API; PR gates green on the `main` verification PR; `workflow_dispatch` run on `develop` uploaded the telemetry/audit artifacts. ✅
 
-## 12. Execution Model
+## 12. Phase 8 — Release Train Simulator (internally Phases 11–13)
+
+**Goal:** demonstrate the release-train promise by letting anyone model it — a deterministic, TDD'd simulation (train interval, capacity, gate pass-rate, slip policy, seed → which features board each train, on-time vs slipped, throughput) rendered in `frontend/` and runnable headlessly as a labeled artifact, without ever polluting the delivery telemetry.
+
+Full scope and issue mapping live in `docs/plans/release-train-simulator.md`.
+
+- **Phase 11 — Model & Core:** `frontend/src/lib/release-train.ts` (seeded mulberry32 deterministic engine, `kind: "simulation"` on every output, `RangeError` validation) + 13 Vitest tests; verified natively (PR gates green), merged to `develop`. ✅ done
+- **Phase 12 — Interactive Surface:** `/simulator` route + `SimulationPanel` (capacity / gate pass-rate / interval / seed controls), 5 component tests, hero link; native gates green. ✅ done
+- **Phase 13 — Headless Mode + Telemetry-Honesty:** `scripts/release-train-simulator.mts` + `release-train-simulator.yml` (dispatch-only, artifact-only output), ADR 0010; telemetry verified untouched (pre/post event-set diff). ✅ done
+- **Folded prerequisite (ADR hygiene):** decision log reordered 0001–0008 into decision order with zero forward references before ADR 0009+. ✅ done
+
+**Acceptance:** `make lint` green, no drift; all PR gates green on `main` verification PRs; dispatch run uploads the `release-train-simulation` artifact; pre/post `delivery-telemetry` event set unchanged; ADR 0010 + docs updated.
+
+## 13. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–7 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch).
+> **Status:** Phases 0–8 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch).
 
-## 13. Definition of Done (every phase)
+## 14. Definition of Done (every phase)
 
 - `make lint` green (no drift) after every change.
 - All affected workflows verified green via GitHub-native runs (PR + `workflow_dispatch`).

@@ -79,6 +79,7 @@ Scheduled and tag workflows:
 - `security-rescan` runs weekly (Mon 02:00 UTC) and on demand via `workflow_dispatch`; on schedule runs a blocking gitleaks failure opens an issue.
 - `release-on-tag` fires on `v*` tags and creates a GitHub Release with generated release notes.
 - `delivery-telemetry` runs weekly (Mon 02:30 UTC) and on demand via `workflow_dispatch`. It reads GitHub's native delivery records (deployments, releases, merged PRs, rollback/incident issues) and uploads the audit trail + DORA-style telemetry as a `delivery-telemetry` artifact (see ADR 0008).
+- `release-train-simulator` runs on demand via `workflow_dispatch`. It runs the deterministic release-train model headlessly and uploads a `release-train-simulation` artifact (JSON + markdown). It creates no deployments, releases, PRs, or issues — simulated outputs are labeled artifacts only (ADR 0010), so telemetry is unaffected.
 
 ```sh
 gh workflow run delivery-telemetry.yml --ref develop
@@ -97,7 +98,7 @@ GITHUB_TOKEN="$(gh auth token)" GITHUB_REPOSITORY=frdrpo/learning-pdm-fintech-de
 | Event | Results |
 |---|---|
 | PR run | PR comments (risk report, compliance pass/fail, gate summary) |
-| Non-PR run (`workflow_dispatch`, push, schedule) | Run artifacts: `risk-report`, `gate-report`, `security-rescan-report`, `delivery-telemetry`, `deploy-record-<env>`, `rollback-record`, `release-notes`, `build-info` — download from the run's "Artifacts" section |
+| Non-PR run (`workflow_dispatch`, push, schedule) | Run artifacts: `risk-report`, `gate-report`, `security-rescan-report`, `delivery-telemetry`, `release-train-simulation`, `deploy-record-<env>`, `rollback-record`, `release-notes`, `build-info` — download from the run's "Artifacts" section |
 | Dry-run release | `deploy-<env>.md` records written under `.github/pdm/deployments/` in the job workspace, uploaded as artifacts (never committed) |
 
 ## Troubleshooting
@@ -115,4 +116,5 @@ GITHUB_TOKEN="$(gh auth token)" GITHUB_REPOSITORY=frdrpo/learning-pdm-fintech-de
 | `make test-frontend` fails with `pnpm: command not found` | pnpm is not installed. `brew install pnpm` (or use corepack on Node <25). |
 | Dry-run release produced no Deployment API records | Expected — `dry_run: true` (default) skips `createDeployment` and writes `deploy-<env>.md` artifacts instead. |
 | `delivery-telemetry` metrics report `insufficient-data` | Expected on fresh repos or pure dry-run activity — telemetry reads GitHub-native API records only (ADR 0008); real deployments / rollback or incident issues populate it. |
+| Simulator run "did nothing" to delivery metrics | Expected — the simulator creates labeled artifacts only (ADR 0010); it never writes to the native delivery records telemetry reads. |
 | One comment per push on an active PR | Expected — the PR workflows re-run on every `synchronize`. |
