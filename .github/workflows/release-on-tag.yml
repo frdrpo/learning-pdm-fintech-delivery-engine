@@ -34,7 +34,7 @@ jobs:
 
       - name: Set up pnpm
         if: steps.stack.outputs.found == 'true' && hashFiles('frontend/pnpm-lock.yaml') != ''
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.21.0
 
