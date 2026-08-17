@@ -11,5 +11,6 @@ Architecture Decision Records (ADRs) for the PDM delivery engine. Each entry rec
 | [0005](0005-comment-guard-pull-request-number.md) | Guard PR comments with the pull request number | Accepted |
 | [0006](0006-osv-scanner-action-subdirectory-path.md) | osv-scanner-action resolves under a subdirectory path | Accepted |
 | [0007](0007-github-native-over-act.md) | Test workflows natively on GitHub over a local act harness | Accepted |
+| [0008](0008-github-native-delivery-telemetry.md) | GitHub-native delivery telemetry over an external observability tool | Accepted |
 
 Superseded or rejected decisions are removed from the index but the record itself may note the supersession (see [0004](0004-run-artifact-persistence.md)).

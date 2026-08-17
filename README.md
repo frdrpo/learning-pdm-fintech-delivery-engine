@@ -17,6 +17,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
   - `compliance-guardrail.yml` - Enforces shift-left security scans and secret detection before code merges.
   - `quality-gate.yml` - Required status check: actionlint on workflows + toolchain-driven lint/test/build, aggregated into a single branch-protection gate.
   - `release-pipeline.yml` - Promotes builds through development/staging/production environments and records dry-run deployments.
+  - `delivery-telemetry.yml` - Exports the GitHub-native delivery audit trail and DORA-style telemetry as run artifacts (weekly + on demand).
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
