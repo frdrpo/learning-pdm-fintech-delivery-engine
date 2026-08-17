@@ -1,0 +1,15 @@
+# Decision Log
+
+Architecture Decision Records (ADRs) for the PDM delivery engine. Each entry records a decision, the context that motivated it, and its consequences. New decisions follow the same format as `NNNN-slug.md`.
+
+| ADR | Title | Status |
+|---|---|---|
+| [0001](0001-empty-tree-base-sha.md) | Empty-tree base SHA for trufflehog | Accepted |
+| [0002](0002-dry-run-default-release-pipeline.md) | Dry-run default in the release pipeline | Accepted |
+| [0003](0003-canonical-synced-workflow-copies.md) | Canonical and mirrored workflow copies | Accepted |
+| [0004](0004-run-artifact-persistence.md) | Persist reports and records as run artifacts | Accepted |
+| [0005](0005-comment-guard-pull-request-number.md) | Guard PR comments with the pull request number | Accepted |
+| [0006](0006-osv-scanner-action-subdirectory-path.md) | osv-scanner-action resolves under a subdirectory path | Accepted |
+| [0007](0007-github-native-over-act.md) | Test workflows natively on GitHub over a local act harness | Accepted |
+
+Superseded or rejected decisions are removed from the index but the record itself may note the supersession (see [0004](0004-run-artifact-persistence.md)).
