@@ -13,7 +13,7 @@ The engine is the GitHub Actions setup under `.github/`. Application code (a Nex
 - `.github/pdm/workflows/` — canonical workflow definitions (source of truth).
 - `.github/workflows/` — GitHub-only execution copies, kept byte-identical via `make sync`.
 - `.github/pdm/{reports,deployments,releases}/` — run-artifact staging dirs written by workflows; never committed.
-- `scripts/` — Node helpers used by workflows (`risk-review.mjs`).
+- `scripts/` — Node helpers used by workflows (`risk-review.mjs`, `delivery-telemetry.mjs`).
 - `frontend/` — the Next.js application the delivery gates exercise (pnpm-managed).
 - `docs/` — architecture, native runbook, agent guide, ROADMAP, and the ADR decision log.
 - `Makefile` — `sync`, `lint`, `test-frontend`, `test-gh` targets.
@@ -43,6 +43,7 @@ Edit only `.github/pdm/workflows/` and re-sync. Open a PR to `main` and GitHub r
 - **On Apple Silicon, nothing here needs a container**; `actionlint` runs natively via Homebrew.
 - **Trufflehog needs a base commit**: on non-PR runs use the empty-tree SHA `4b825dc642cb6eb9a060e54bf8d69288fbee4904` so the scan still covers the tree deterministically.
 - **Deployments default to dry-run**: `workflow_dispatch` on `release-pipeline` defaults `dry_run: true`; only a push to `main` or an explicit `dry_run: false` calls the Deployment API. `rollback_to` always records a dry-run rollback event.
+- **Delivery telemetry reads GitHub-native records only** (ADR 0008): `scripts/delivery-telemetry.mjs` queries the Deployments/Releases/Pulls/Issues APIs with the built-in `GITHUB_TOKEN` and exports audit + metrics as run artifacts. Dry-run records are artifacts, not API events, so they never populate the metrics — expect `insufficient-data` until real deployments and rollback/incident issues exist.
 
 ## Definition of done for workflow changes
 

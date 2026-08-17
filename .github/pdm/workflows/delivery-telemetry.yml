@@ -1,0 +1,48 @@
+name: PDM Delivery Telemetry & Audit Trail
+
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Reads GitHub-native delivery records via the API and exports the audit trail +
+# DORA-style telemetry as run artifacts (never committed).
+
+on:
+  schedule:
+    - cron: '30 2 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: delivery-telemetry
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry:
+    name: Collect delivery telemetry & audit trail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run delivery telemetry & audit trail exporter
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          LOOKBACK_DAYS: '90'
+        run: |
+          mkdir -p .github/pdm/reports
+          node scripts/delivery-telemetry.mjs .github/pdm/reports
+          ls -la .github/pdm/reports/delivery-*
+
+      - name: Upload delivery telemetry & audit trail
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-telemetry
+          path: .github/pdm/reports/delivery-*
+          retention-days: 7

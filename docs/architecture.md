@@ -26,6 +26,7 @@ Run artifacts (reports, deployment records, release notes) are written under `.g
 | `release-pipeline.yml` | push to `main`; `workflow_dispatch` with `environment` (default `all`), `dry_run` (default `true`), `rollback_to` | `build` (frontend `next build`), `deploy-development`, `deploy-staging`, `deploy-production`, `rollback` | `contents: read`, `deployments: write` | `build-info` artifact; dry-run `deploy-record-<env>.md` / `rollback.md` artifacts; real `createDeployment` calls when not dry-run |
 | `security-rescan.yml` | weekly schedule (Mon 02:00 UTC); `workflow_dispatch` | `gitleaks`, `osv`, `report` | `contents: read`, `issues: write` | `security-rescan-report` artifact; issue filed on blocking gitleaks findings on schedule runs |
 | `release-on-tag.yml` | push tags `v*` | `release` (build, release notes, GitHub Release) | `contents: write` | GitHub Release + `release-notes` artifact |
+| `delivery-telemetry.yml` | weekly schedule (Mon 02:30 UTC); `workflow_dispatch` | `telemetry` (read GitHub API records → audit trail + DORA-style metrics) | `contents: read` | `delivery-telemetry` artifact (`delivery-audit-<ts>.json`, `delivery-telemetry-<ts>.json`/`.md`) |
 
 Adjacent configuration: `.github/dependabot.yml` keeps GitHub Actions and npm dependencies fresh (weekly, targeting `develop`).
 
@@ -84,6 +85,16 @@ deploy-production    (approval via required_reviewers)
 
 - `release-on-tag.yml` triggers on `v*` tags: builds the deployable, generates release notes (commits since the previous tag, or the most recent commits when no previous tag exists), creates a GitHub Release, and uploads the release notes as an artifact.
 - `security-rescan.yml` runs weekly plus on demand: gitleaks + OSV across the whole repo, then a report job writes `security-rescan-<date>.md` and uploads it as an artifact. On schedule runs, a blocking gitleaks failure also opens an issue; `workflow_dispatch` runs do not.
+
+## Delivery telemetry & audit trail
+
+`delivery-telemetry.yml` makes delivery outcomes observable without any external service (ADR 0008). It reads GitHub's native records — the Deployment API, releases, merged PRs, and rollback/incident issues — via `scripts/delivery-telemetry.mjs` and exports three run artifacts:
+
+- `delivery-audit-<ts>.json` — the raw event snapshot: deployments (environment, ref, created_at), releases, merged PRs (merge commit SHA, merged_at), and failure events.
+- `delivery-telemetry-<ts>.json` — derived metrics: deployment frequency per environment, lead time for changes (median merge→first matching deployment), change failure rate (failure events ÷ deployments), and a time-to-recovery proxy (median failure event→next deployment).
+- `delivery-telemetry-<ts>.md` — the human-readable report.
+
+The workflow runs weekly (Mon 02:30 UTC) and on demand via `workflow_dispatch`, reads with the built-in `GITHUB_TOKEN` (`contents: read`), and uploads the three files as a `delivery-telemetry` artifact. Metrics with no matching native events are marked `insufficient-data` and explained — dry-run records are artifacts, not API events, so only real (`dry_run: false` / push-to-main) activity populates the telemetry.
 
 ## Testing model (GitHub native)
 

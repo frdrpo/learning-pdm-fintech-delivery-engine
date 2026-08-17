@@ -6,13 +6,14 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 
 ## 2. Current State
 
-- **6 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
+- **7 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
   - `risk-health-check` — gitleaks + osv-scanner + code-health + AI-assisted diff risk review (`scripts/risk-review.mjs`); posts PR comment or uploads a report artifact on non-PR runs
   - `compliance-guardrail` — trufflehog base→head; posts PR comment
   - `quality-gate` — actionlint + frontend lint/typecheck/test/build; gate job; required status check on `main`; posts comment / uploads report artifact
   - `release-pipeline` — build-info artifact; post-deploy verify; dry-run dev→staging→prod; rollback record; uploads deployment records on dry-run
   - `security-rescan` — scheduled (weekly) + `workflow_dispatch` gitleaks + osv; uploads report artifact; files an issue on blocking findings
   - `release-on-tag` — `v*` tag push; builds, generates release notes, creates a GitHub Release
+  - `delivery-telemetry` — weekly + on-demand export of the GitHub-native audit trail and DORA-style telemetry as run artifacts
 - **Application stack**: a Next.js 16 frontend (`frontend/`, TypeScript + Tailwind v4 + Vitest, pnpm) that the quality gate, code-health, and release build exercise (Phase 6 replaced the earlier minimal Node service).
 - **Frontend tooling**: native `make test-frontend` (install + lint + typecheck + test + build) — no container; CI runs the same suite via `corepack`/`pnpm` in `frontend/`.
 - **Testing is GitHub native**: workflows are verified by pushing a branch and opening a PR (`make test-gh`), plus `workflow_dispatch` runs for the release pipeline. No local `act`/Docker harness.
@@ -122,13 +123,25 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 
 **Acceptance:** `make test-frontend` green, `make sync`/`make lint` clean, GitHub-native PR run green. ✅
 
-## 11. Execution Model
+## 11. Phase 7 — Delivery Telemetry & Audit Trail
+
+**Goal:** make delivery outcomes observable. Every delivery event is already recorded natively by GitHub (Deployment API records, releases, merged PRs, issues); Phase 7 reads that record and turns it into a durable audit trail plus DORA-style telemetry, with no external observability service.
+
+- **T7.1** `scripts/delivery-telemetry.mjs` — exports a raw audit-trail snapshot (deployments per environment, releases, merged PRs, rollback/incident issues) and derives deployment frequency, lead time for changes, change failure rate, and a time-to-recovery proxy. Insufficient data is reported as `insufficient-data` and explained, never invented. ✅ done — `scripts/delivery-telemetry.mjs`
+- **T7.2** `delivery-telemetry.yml` — weekly schedule (Mon 02:30 UTC) + `workflow_dispatch`; runs the exporter with the built-in `GITHUB_TOKEN` and uploads `delivery-telemetry` (audit JSON + metrics JSON + markdown report) as a run artifact. ✅ done — `.github/pdm/workflows/delivery-telemetry.yml` + synced copy
+- **T7.3** ADR 0008 records the decision to compute telemetry from GitHub-native records over an external observability tool. ✅ done — `docs/decisions/0008-github-native-delivery-telemetry.md`
+- **T7.4** Docs updated: architecture workflow map + telemetry section, runbook results table, agent guide. ✅ done
+- **T7.5** Verify natively on GitHub: `workflow_dispatch` run (and the weekly schedule) uploads the telemetry artifact. ⏳ pending — runs through the PR/`workflow_dispatch` loop, then this line flips to ✅
+
+**Acceptance:** `make lint` green; exporter tested against the live repo API; telemetry/audit artifacts upload on a native run.
+
+## 12. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is the next track.
+> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is implemented on `feat/phase7-delivery-telemetry`; native verification (T7.5) is the remaining step before it is marked complete.
 
-## 12. Definition of Done (every phase)
+## 13. Definition of Done (every phase)
 
 - `make lint` green (no drift) after every change.
 - All affected workflows verified green via GitHub-native runs (PR + `workflow_dispatch`).
