@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PDM Frontend (Application Surface)
 
-## Getting Started
+The application surface of the **AI-Augmented Fintech Delivery Engine** — a PDM
+(Product Delivery Management) reference repo. It is a Next.js 16 + React 19 +
+TypeScript + Tailwind CSS v4 frontend that gives the PDM delivery gates
+(`quality-gate`, `risk-health-check`, `release-pipeline`, `publish-pages`) real
+work, and it also runs a deterministic release-train simulator.
 
-First, run the development server:
+It is **not** a generic Next.js starter: the project is pnpm-only, static-exported
+to GitHub Pages, and its simulator outputs are labeled artifacts that never count
+as real delivery records (ADR 0010).
+
+## Stack
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4**
+- **Vitest 4** + Testing Library (jsdom) for unit and component tests
+
+## Getting started
+
+The repo is pnpm-based (`packageManager: pnpm@11.21.0`). Node ≥25 ships no
+corepack, so install pnpm directly if you don't have it (`brew install pnpm`).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd frontend
+pnpm install          # install dependencies
+pnpm dev              # start the development server on http://localhost:3000
+pnpm test:watch       # run tests in watch mode for TDD
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To run the full native suite the delivery gates execute (install + lint +
+typecheck + test + build), use the repo-level target from the repository root:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+make test-frontend
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Available scripts (see `package.json`): `dev`, `build`, `start`, `lint`,
+`typecheck`, `test`, `test:watch`.
 
-## Learn More
+## Routes
 
-To learn more about Next.js, take a look at the following resources:
+The app uses the `src/app/` directory:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/` — the landing page: a dark fintech hero plus a grid of `FeatureCard`s
+  describing the PDM delivery gates (`src/app/page.tsx`).
+- `/simulator` — the release-train simulator: a deterministic what-if model of
+  features boarding a fixed-cadence train (`src/app/simulator/page.tsx`,
+  `src/components/simulation-panel.tsx`). Simulated outputs carry
+  `kind: "simulation"` and never enter the GitHub-native delivery records
+  `delivery-telemetry` reads (ADR 0010).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Testing
 
-## Deploy on Vercel
+Unit and component tests are colocated under `src/` (`src/**/*.test.{ts,tsx}`)
+and run with Vitest in a jsdom environment. The test sequence is deterministic
+(seeded) so order-dependent results are reproducible
+(`vitest.config.mts`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm test        # run once
+pnpm test:watch  # watch mode
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Build & deploy
+
+`next.config.ts` uses `output: "export"` with `trailingSlash`, so `next build`
+emits a **static site** into `frontend/out` (no Node server). The `basePath` is
+driven by `NEXT_PUBLIC_BASE_PATH` so the site serves correctly from the GitHub
+Pages subpath.
+
+Publishing is handled by the `publish-pages` workflow, which runs on every push
+to `develop` (and on demand): it builds the static export and deploys to the
+`github-pages` environment. The live Pages site is also the post-deploy verify
+target for `release-pipeline` (`DEPLOY_VERIFY_URL`).
+
+```bash
+pnpm build  # static export -> frontend/out
+pnpm start  # serve the built export locally
+```
+
+## How the delivery gates exercise the frontend
+
+- `quality-gate` — required status check on `main`; runs lint + typecheck +
+  test + build against `frontend/`.
+- `risk-health-check` — its code-health job runs the same suite.
+- `release-pipeline` — the build job produces the deployable and the post-deploy
+  verify step curls the live Pages URL.
+- `publish-pages` — builds and publishes the static export to GitHub Pages.
+
+## Documentation
+
+- [Repository README](../README.md)
+- [Architecture map](../docs/architecture.md) — workflow map and env promotion chain
+- [Local runbook](../docs/local-runbook.md) — hands-on workflow loop
+- [Agent guide](../docs/agents-guide.md) — contributor and agent guidance
+- [Decision log](../docs/decisions/README.md) — ADRs (0001–0010)
