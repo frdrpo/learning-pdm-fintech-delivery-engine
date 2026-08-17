@@ -25,5 +25,5 @@ Open a PR to `main` and GitHub runs the three PR workflows natively; the release
 - **Cross-job files don't persist on GitHub** (each job gets a fresh workspace). Each workflow that writes reports/records must upload them as run artifacts from the same job that wrote them; artifacts use `if: !github.event.pull_request` (or `real_deploy == 'false'`) guards.
 - **Workflows run on every PR synchronize** and each posts a comment — expect a comment per push on active PRs.
 - **`make sync` must be run before committing**: GitHub only executes workflows from `.github/workflows/`, and `make lint` fails on drift between the two trees.
-- **The frontend stack is pnpm, run in `frontend/`.** The quality gate runs `corepack enable && pnpm install --frozen-lockfile` (works on CI's Node 22). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
+- **The frontend stack is pnpm, run in `frontend/`.** The quality gate sets up pnpm with `pnpm/action-setup@v4` (version pinned to the lockfile) *before* `actions/setup-node` (which needs `pnpm` present for its `cache: pnpm`). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
 - On Apple Silicon, nothing here needs a container; `actionlint` runs natively via Homebrew.

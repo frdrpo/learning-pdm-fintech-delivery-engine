@@ -115,7 +115,7 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 **Goal:** replace the placeholder Node service with a real, test-first product surface so the gates exercise an actual application.
 
 - **T6.1** Land a Next.js 16 + TypeScript + Tailwind v4 app in `frontend/`, TDD'd with Vitest (components + unit tests). ✅ done — `frontend/` (landed from the earlier `feat/start-frontend` exploration)
-- **T6.2** Rewire the gates to the frontend stack: `quality-gate.code-quality` and `risk-health-check.code-health` run `corepack`/`pnpm` (install + lint + typecheck + test [+ build]) in `frontend/` with `actions/setup-node` pnpm cache. ✅ done
+- **T6.2** Rewire the gates to the frontend stack: `quality-gate.code-quality` and `risk-health-check.code-health` set up pnpm via `pnpm/action-setup@v4` (pinned to the lockfile) before `actions/setup-node` (pnpm cache), then run install + lint + typecheck + test [+ build] in `frontend/`. ✅ done
 - **T6.3** Fix `release-pipeline.build` to actually build the frontend (`pnpm run build` → `.next`) instead of the removed root npm build. ✅ done
 - **T6.4** Remove the legacy app surface (`src/`, root `package.json`/lock, `eslint.config.js`, `scripts/build.mjs`) — keep `scripts/risk-review.mjs`. ✅ done
 - **T6.5** Native, container-free `make test-frontend` (pnpm; corepack on Node <25) mirroring the gate suite; docs updated. ✅ done

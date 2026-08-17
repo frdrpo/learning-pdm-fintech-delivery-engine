@@ -36,7 +36,7 @@ make test-frontend   # pnpm install --frozen-lockfile + lint + typecheck + test 
 cd frontend && pnpm test:watch   # fast local TDD loop
 ```
 
-`make test-frontend` needs pnpm on PATH (`brew install pnpm`; on Node <25 corepack also works). CI uses `corepack enable` since the runner runs Node 22.
+`make test-frontend` needs pnpm on PATH (`brew install pnpm`; on Node <25 corepack also works). CI sets up pnpm with `pnpm/action-setup@v4` (pinned to the lockfile's version) before `actions/setup-node`, whose `cache: pnpm` requires pnpm to already be installed.
 
 ## `make test-gh` — the PR verification loop
 
@@ -99,6 +99,6 @@ Scheduled and tag workflows:
 | Staging/production deploy waiting indefinitely | Environment protection requires a reviewer — approve the run in the Actions UI. |
 | `gh: not authenticated` | Run `gh auth login`. |
 | `make test-gh` errors on push | Push access is required; check your remote and branch protection. |
-| `make test-frontend` fails with `corepack: No such file or directory` | Local Node ≥25 ships no corepack. Use `pnpm` (brew install pnpm); CI uses `corepack enable` on Node 22. |
+| `make test-frontend` fails with `pnpm: command not found` | pnpm is not installed. `brew install pnpm` (or use corepack on Node <25). |
 | Dry-run release produced no Deployment API records | Expected — `dry_run: true` (default) skips `createDeployment` and writes `deploy-<env>.md` artifacts instead. |
 | One comment per push on an active PR | Expected — the PR workflows re-run on every `synchronize`. |

@@ -83,6 +83,12 @@ jobs:
         if: steps.detect.outputs.found != 'true'
         run: echo "No frontend toolchain detected; code-quality gate passes by default."
 
+      - name: Set up pnpm
+        if: steps.detect.outputs.has_lockfile == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
       - name: Set up Node.js
         if: steps.detect.outputs.has_lockfile == 'true'
         uses: actions/setup-node@v7
@@ -90,11 +96,6 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: Enable pnpm
-        if: steps.detect.outputs.has_lockfile == 'true'
-        shell: bash
-        run: corepack enable
 
       - name: Install dependencies
         if: steps.detect.outputs.has_lockfile == 'true'
