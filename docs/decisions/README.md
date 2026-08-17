@@ -12,5 +12,6 @@ Architecture Decision Records (ADRs) for the PDM delivery engine. Each entry rec
 | [0006](0006-run-artifact-persistence.md) | Persist reports and records as run artifacts | Accepted |
 | [0007](0007-comment-guard-pull-request-number.md) | Guard PR comments with the pull request number | Accepted |
 | [0008](0008-github-native-delivery-telemetry.md) | GitHub-native delivery telemetry over an external observability tool | Accepted |
+| [0010](0010-simulations-are-labeled-artifacts.md) | Simulations are labeled artifacts, never native delivery records | Accepted |
 
 Superseded or rejected decisions are removed from the index but the record itself may note the supersession (see [0006](0006-run-artifact-persistence.md)).

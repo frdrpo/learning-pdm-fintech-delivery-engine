@@ -27,6 +27,7 @@ Run artifacts (reports, deployment records, release notes) are written under `.g
 | `security-rescan.yml` | weekly schedule (Mon 02:00 UTC); `workflow_dispatch` | `gitleaks`, `osv`, `report` | `contents: read`, `issues: write` | `security-rescan-report` artifact; issue filed on blocking gitleaks findings on schedule runs |
 | `release-on-tag.yml` | push tags `v*` | `release` (build, release notes, GitHub Release) | `contents: write` | GitHub Release + `release-notes` artifact |
 | `delivery-telemetry.yml` | weekly schedule (Mon 02:30 UTC); `workflow_dispatch` | `telemetry` (read GitHub API records → audit trail + DORA-style metrics) | `contents: read` | `delivery-telemetry` artifact (`delivery-audit-<ts>.json`, `delivery-telemetry-<ts>.json`/`.md`) |
+| `release-train-simulator.yml` | `workflow_dispatch` | `simulate` (run the deterministic release-train model headlessly) | `contents: read` | `release-train-simulation` artifact (`.json`/`.md`); creates no native delivery records (ADR 0010) |
 
 Adjacent configuration: `.github/dependabot.yml` keeps GitHub Actions and npm dependencies fresh (weekly, targeting `develop`).
 
@@ -95,6 +96,10 @@ deploy-production    (approval via required_reviewers)
 - `delivery-telemetry-<ts>.md` — the human-readable report.
 
 The workflow runs weekly (Mon 02:30 UTC) and on demand via `workflow_dispatch`, reads with the built-in `GITHUB_TOKEN` (`contents: read`), and uploads the three files as a `delivery-telemetry` artifact. Metrics with no matching native events are marked `insufficient-data` and explained — dry-run records are artifacts, not API events, so only real (`dry_run: false` / push-to-main) activity populates the telemetry.
+
+## Release train simulator
+
+`release-train-simulator.yml` runs the deterministic release-train model (Phase 11) headlessly via `scripts/release-train-simulator.mts` and uploads a `release-train-simulation` artifact (JSON report + markdown). It is `workflow_dispatch` only, takes an optional `sim_config` JSON override, and creates **no** deployments, releases, PRs, or issues. Simulated outputs carry `kind: "simulation"` and are labeled artifacts only — they never enter the GitHub-native records `delivery-telemetry` reads (ADR 0010).
 
 ## Testing model (GitHub native)
 
