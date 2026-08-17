@@ -6,15 +6,20 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 
 ## 2. Current State
 
-- **4 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
-  - `risk-health-check` — gitleaks + osv-scanner + code-health; posts PR comment or uploads a report artifact on non-PR runs
+- **6 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
+  - `risk-health-check` — gitleaks + osv-scanner + code-health + AI-assisted diff risk review (`scripts/risk-review.mjs`); posts PR comment or uploads a report artifact on non-PR runs
   - `compliance-guardrail` — trufflehog base→head; posts PR comment
-  - `quality-gate` — actionlint + lint/test/build (no-op without a stack); gate job; posts comment / uploads report artifact
-  - `release-pipeline` — build-info artifact; dry-run dev→staging→prod; uploads deployment records on dry-run
+  - `quality-gate` — actionlint + lint/test/build; gate job; required status check on `main`; posts comment / uploads report artifact
+  - `release-pipeline` — build-info artifact; post-deploy verify; dry-run dev→staging→prod; rollback record; uploads deployment records on dry-run
+  - `security-rescan` — scheduled (weekly) + `workflow_dispatch` gitleaks + osv; uploads report artifact; files an issue on blocking findings
+  - `release-on-tag` — `v*` tag push; builds, generates release notes, creates a GitHub Release
 - **Testing is GitHub native**: workflows are verified by pushing a branch and opening a PR (`make test-gh`), plus `workflow_dispatch` runs for the release pipeline. No local `act`/Docker harness.
+- **GitHub delivery**: environments `development`/`staging`/`production` exist with required-reviewer protection on staging/prod; real `createDeployment` exercised; `quality-gate` is a required status check on `main`.
+- **Dependency automation**: Dependabot configured for npm + GitHub Actions (target `develop`); version bumps are mirrored into canonical workflows by hand after merge.
 - **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
-- **Known gaps**: `opencode.json` untracked; `AGENTS.md` is gitignored.
+- **Docs**: architecture map, native runbook, agent guide, and ADR log tracked under `docs/`.
+- **Known gaps**: none open (Phase 0–5 complete).
 
 ## 3. Parallelization Strategy
 
@@ -71,39 +76,41 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 **Goal:** behave as a real PR gate + deployment pipeline on GitHub (not just locally).
 
 - **T3.0** Move workflow testing from local `act` to GitHub native: remove `.act/` fixtures + Dockerfile, strip `act` targets from the Makefile, add `make test-gh`, persist non-PR reports/deployment records as run artifacts. ✅ done
-- **T3.1** Create environments `development`/`staging`/`production` (+ approval rules for staging/prod).
+- **T3.1** Create environments `development`/`staging`/`production` (+ approval rules for staging/prod). ✅ done — envs exist; required-reviewer protection on staging/prod verified via a dry-run promotion approval
 - **T3.2** Open a real PR from a feature branch → verify the 3 guardrail comments post (native loop is `make test-gh`). ✅ part of T3.0
-- **T3.3** Add `quality-gate` as a required status check on `main` (branch protection).
-- **T3.4** Exercise one real deployment API path (`createDeployment`), keeping `dry_run: true` as default.
+- **T3.3** Add `quality-gate` as a required status check on `main` (branch protection). ✅ done
+- **T3.4** Exercise one real deployment API path (`createDeployment`), keeping `dry_run: true` as default. ✅ done — real `createDeployment` to `development` verified via `workflow_dispatch` with `dry_run: false`
 
-**Acceptance:** merged PR shows all comments; environments configured; real deployment record exists; no regressions.
+**Acceptance:** merged PR shows all comments; environments configured; real deployment record exists; no regressions. ✅
 
 ## 8. Phase 4 — Track C: Extend the PDM Surface
 
 **Goal:** cover more of the delivery lifecycle. Each item is optional & independently shippable.
 
-- **T4.1** Scheduled/on-demand security re-scan (reuse gitleaks + osv).
-- **T4.2** Tag-triggered release job (`push` tags `v*`) with release notes.
-- **T4.3** Dependabot/Renovate config for dependency automation.
-- **T4.4** Rollback + post-deploy verification steps in `release-pipeline`.
-- **T4.5** Wire the AI diff risk-review placeholder hook (noted in `risk-report`).
+- **T4.1** Scheduled/on-demand security re-scan (reuse gitleaks + osv). ✅ done — `security-rescan.yml`
+- **T4.2** Tag-triggered release job (`push` tags `v*`) with release notes. ✅ done — `release-on-tag.yml`
+- **T4.3** Dependabot/Renovate config for dependency automation. ✅ done — `.github/dependabot.yml`; first bumps landed (checkout/setup-node 4→7), mirrored into canonical
+- **T4.4** Rollback + post-deploy verification steps in `release-pipeline`. ✅ done — `rollback_to` input + verify steps + rollback job
+- **T4.5** Wire the AI diff risk-review placeholder hook (noted in `risk-report`). ✅ done — `scripts/risk-review.mjs` + `risk-review` job reporting a live risk score
 
-**Acceptance per item:** canonical workflow added, `make sync`, `make lint` clean, GitHub-native PR/dispatch run green.
+**Acceptance per item:** canonical workflow added, `make sync`, `make lint` clean, GitHub-native PR/dispatch run green. ✅
 
 ## 9. Phase 5 — Track D: Documentation & Learning Material (starts day 1)
 
 **Goal:** make the repo a teachable artifact, tracked (not gitignored).
 
-- **T5.1** Architecture README: workflow map, job graph, env promotion chain.
-- **T5.2** Native runbook: `make test-gh` PR loop, how to add a workflow, sync discipline.
-- **T5.3** Promote `AGENTS.md` content into tracked docs.
-- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, GitHub-native testing over `act`, comment-guard patterns).
+- **T5.1** Architecture README: workflow map, job graph, env promotion chain. ✅ done — `docs/architecture.md`
+- **T5.2** Native runbook: `make test-gh` PR loop, how to add a workflow, sync discipline. ✅ done — `docs/local-runbook.md`
+- **T5.3** Promote `AGENTS.md` content into tracked docs. ✅ done — `docs/agents-guide.md`
+- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, GitHub-native testing over `act`, comment-guard patterns). ✅ done — `docs/decisions/` (0001–0007)
 
-**Acceptance:** docs tracked, linked from workflows, up to date with every merged phase.
+**Acceptance:** docs tracked, linked from workflows, up to date with every merged phase. ✅
 
 ## 10. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
+
+> **Status:** Phases 0–5 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
 
 ## 11. Definition of Done (every phase)
 
