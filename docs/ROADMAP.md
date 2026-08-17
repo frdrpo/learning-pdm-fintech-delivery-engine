@@ -131,15 +131,15 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 - **T7.2** `delivery-telemetry.yml` — weekly schedule (Mon 02:30 UTC) + `workflow_dispatch`; runs the exporter with the built-in `GITHUB_TOKEN` and uploads `delivery-telemetry` (audit JSON + metrics JSON + markdown report) as a run artifact. ✅ done — `.github/pdm/workflows/delivery-telemetry.yml` + synced copy
 - **T7.3** ADR 0008 records the decision to compute telemetry from GitHub-native records over an external observability tool. ✅ done — `docs/decisions/0008-github-native-delivery-telemetry.md`
 - **T7.4** Docs updated: architecture workflow map + telemetry section, runbook results table, agent guide. ✅ done
-- **T7.5** Verify natively on GitHub: `workflow_dispatch` run (and the weekly schedule) uploads the telemetry artifact. ⏳ pending — runs through the PR/`workflow_dispatch` loop, then this line flips to ✅
+- **T7.5** Verify natively on GitHub: the three PR gates passed on the `main` verification PR (which actionlint-validated the new workflow too). The `delivery-telemetry` `workflow_dispatch` run itself can only execute once the workflow file exists on `main` (GitHub registers dispatch workflows from the default branch) — so artifact-upload verification lands when the phase reaches `main`: `gh workflow run delivery-telemetry.yml --ref develop`. ⏳ pending land-on-main → flips to ✅
 
-**Acceptance:** `make lint` green; exporter tested against the live repo API; telemetry/audit artifacts upload on a native run.
+**Acceptance:** `make lint` green; exporter tested against the live repo API; PR gates green on the `main` verification PR; telemetry/audit artifacts upload once the workflow is dispatchable from `main`.
 
 ## 12. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is implemented on `feat/phase7-delivery-telemetry`; native verification (T7.5) is the remaining step before it is marked complete.
+> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is implemented on `feat/phase7-delivery-telemetry` and green against the PR gates; the dispatch-based artifact check (T7.5) finishes once the workflow reaches `main`.
 
 ## 13. Definition of Done (every phase)
 
