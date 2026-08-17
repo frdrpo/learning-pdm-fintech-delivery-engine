@@ -1,4 +1,4 @@
-# ADR 0003: Canonical and mirrored workflow copies
+# ADR 0001: Canonical and mirrored workflow copies
 
 - **Status:** Accepted
 

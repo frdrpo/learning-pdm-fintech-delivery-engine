@@ -1,4 +1,4 @@
-# ADR 0006: osv-scanner-action resolves under a subdirectory path
+# ADR 0004: osv-scanner-action resolves under a subdirectory path
 
 - **Status:** Accepted
 

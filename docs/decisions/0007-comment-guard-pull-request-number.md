@@ -1,4 +1,4 @@
-# ADR 0005: Guard PR comments with the pull request number
+# ADR 0007: Guard PR comments with the pull request number
 
 - **Status:** Accepted
 
@@ -13,7 +13,7 @@ Comment-posting steps are guarded by the pull request number:
 - In YAML: `if: github.event.pull_request.number != null` (used by `risk-health-check` and `quality-gate`).
 - In github-script: `if (context.payload.pull_request?.number) { ... }` (used by `compliance-guardrail`).
 
-Additionally, github-script v7 already injects `context` and `github` — never redeclare `const { context } = ...`. Non-PR runs persist their output as run artifacts instead of commenting (ADR 0004).
+Additionally, github-script v7 already injects `context` and `github` — never redeclare `const { context } = ...`. Non-PR runs persist their output as run artifacts instead of commenting (ADR 0006).
 
 ## Consequences
 
