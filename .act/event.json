@@ -1,0 +1,24 @@
+{
+  "action": "opened",
+  "repository": {
+    "id": 1,
+    "name": "learning-pdm-fintech-delivery-engine",
+    "full_name": "frdrpo/learning-pdm-fintech-delivery-engine",
+    "owner": {
+      "login": "frdrpo"
+    },
+    "default_branch": "main"
+  },
+  "pull_request": {
+    "number": null,
+    "ref": "feat/setup-github",
+    "base": {
+      "ref": "main",
+      "sha": "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+    },
+    "head": {
+      "ref": "feat/setup-github",
+      "sha": "851e708aab6931239713b11faf9e2d7106b4c34a"
+    }
+  }
+}
