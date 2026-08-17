@@ -87,6 +87,10 @@ deploy-production    (approval via required_reviewers)
 - `release-on-tag.yml` triggers on `v*` tags: builds the deployable, generates release notes (commits since the previous tag, or the most recent commits when no previous tag exists), creates a GitHub Release, and uploads the release notes as an artifact.
 - `security-rescan.yml` runs weekly plus on demand: gitleaks + OSV across the whole repo, then a report job writes `security-rescan-<date>.md` and uploads it as an artifact. On schedule runs, a blocking gitleaks failure also opens an issue; `workflow_dispatch` runs do not.
 
+## GitHub Pages publish (live verify target)
+
+`publish-pages.yml` publishes the static-exported frontend to GitHub Pages on every push to `develop` (the `github-pages` environment's branch policy) plus `workflow_dispatch`. The `github-pages` environment restricts deployment to `develop`; the publish build sets `NEXT_PUBLIC_BASE_PATH=/learning-pdm-fintech-delivery-engine` for the subpath, and the Pages site becomes the live target for `release-pipeline`'s post-deploy verify step via the repo variable `DEPLOY_VERIFY_URL`. The frontend build uses `output: 'export'` so `next build` emits a static site into `frontend/out`.
+
 ## Delivery telemetry & audit trail
 
 `delivery-telemetry.yml` makes delivery outcomes observable without any external service (ADR 0008). It reads GitHub's native records — the Deployment API, releases, merged PRs, and rollback/incident issues — via `scripts/delivery-telemetry.mjs` and exports three run artifacts:

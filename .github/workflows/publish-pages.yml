@@ -1,0 +1,93 @@
+name: PDM Publish GitHub Pages
+
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Publishes the static-exported frontend to GitHub Pages so release-pipeline's
+# post-deploy verify step has a live URL to curl (DEPLOY_VERIFY_URL). The
+# `github-pages` environment restricts to the develop branch (branch policy).
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build static export
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Detect frontend toolchain
+        id: detect
+        shell: bash
+        run: |
+          if [[ -f package.json ]]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -f pnpm-lock.yaml ]]; then
+            echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up pnpm
+        if: steps.detect.outputs.has_lockfile == 'true'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.has_lockfile == 'true'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        if: steps.detect.outputs.has_lockfile == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static export
+        if: steps.detect.outputs.found == 'true'
+        run: pnpm run build
+        env:
+          NEXT_PUBLIC_BASE_PATH: /learning-pdm-fintech-delivery-engine
+
+      - name: Configure Pages
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/out
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    if: needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

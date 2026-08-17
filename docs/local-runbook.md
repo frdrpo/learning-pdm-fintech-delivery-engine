@@ -80,6 +80,7 @@ Scheduled and tag workflows:
 - `release-on-tag` fires on `v*` tags and creates a GitHub Release with generated release notes.
 - `delivery-telemetry` runs weekly (Mon 02:30 UTC) and on demand via `workflow_dispatch`. It reads GitHub's native delivery records (deployments, releases, merged PRs, rollback/incident issues) and uploads the audit trail + DORA-style telemetry as a `delivery-telemetry` artifact (see ADR 0008).
 - `release-train-simulator` runs on demand via `workflow_dispatch`. It runs the deterministic release-train model headlessly and uploads a `release-train-simulation` artifact (JSON + markdown). It creates no deployments, releases, PRs, or issues — simulated outputs are labeled artifacts only (ADR 0010), so telemetry is unaffected.
+- `publish-pages` publishes the static-exported frontend to GitHub Pages on every push to `develop` (the `github-pages` environment branch policy) plus `workflow_dispatch`. The Pages site is the live target for `release-pipeline`'s post-deploy verify step via the `DEPLOY_VERIFY_URL` repo variable.
 
 ```sh
 gh workflow run delivery-telemetry.yml --ref develop
