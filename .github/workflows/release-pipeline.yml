@@ -151,6 +151,14 @@ jobs:
               );
             }
 
+      - name: Upload development deployment record
+        if: needs.build.outputs.real_deploy == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-record-development
+          path: .github/pdm/deployments/deploy-development.md
+          retention-days: 7
+
   deploy-staging:
     name: Deploy to Staging
     needs:
@@ -203,6 +211,14 @@ jobs:
               );
             }
 
+      - name: Upload staging deployment record
+        if: needs.build.outputs.real_deploy == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-record-staging
+          path: .github/pdm/deployments/deploy-staging.md
+          retention-days: 7
+
   deploy-production:
     name: Deploy to Production
     needs:
@@ -254,3 +270,11 @@ jobs:
                 `# Deployment: ${envName}\n\n- sha: ${context.sha}\n- ref: ${context.ref}\n- mode: dry-run\n`
               );
             }
+
+      - name: Upload production deployment record
+        if: needs.build.outputs.real_deploy == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-record-production
+          path: .github/pdm/deployments/deploy-production.md
+          retention-days: 7

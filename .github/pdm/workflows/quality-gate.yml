@@ -139,23 +139,31 @@ jobs:
           } > /tmp/gate-report.md
 
       - name: Post gate summary comment
+        if: github.event.pull_request.number != null
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const body = fs.readFileSync('/tmp/gate-report.md', 'utf8');
-            if (context.payload.pull_request?.number) {
-              const resp = await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body,
-              });
-              console.log(`Posted comment ${resp.data.id}`);
-            } else {
-              console.log('Not a pull request; skipping comment.');
-              const outDir = `${process.env.GITHUB_WORKSPACE}/.github/pdm/reports`;
-              const fs = require('fs');
-              fs.mkdirSync(outDir, { recursive: true });
-              fs.writeFileSync(`${outDir}/gate-report.md`, body);
-            }
+            const resp = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
+            console.log(`Posted comment ${resp.data.id}`);
+
+      - name: Persist gate report for non-PR runs
+        if: github.event.pull_request.number == null
+        shell: bash
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.github/pdm/reports"
+          cp /tmp/gate-report.md "$GITHUB_WORKSPACE/.github/pdm/reports/gate-report.md"
+
+      - name: Upload gate report
+        if: always() && github.event.pull_request.number == null
+        uses: actions/upload-artifact@v4
+        with:
+          name: gate-report
+          path: .github/pdm/reports/gate-report.md
+          retention-days: 7

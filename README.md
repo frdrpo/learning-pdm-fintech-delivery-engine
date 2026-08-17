@@ -10,28 +10,38 @@ This repository serves as a reference implementation for modern Product Delivery
 
 All PDM workflow and deployment material is consolidated under a single folder, `.github/pdm/`:
 
+> **Note:** "PDM" here means Product Delivery Management, not the Python package manager.
+
 - `.github/pdm/workflows/` - Canonical workflow definitions (source of truth).
   - `risk-health-check.yml` - Automates PR size tracking, code complexity analysis, and PDM risk reporting.
   - `compliance-guardrail.yml` - Enforces shift-left security scans and secret detection before code merges.
   - `quality-gate.yml` - Required status check: actionlint on workflows + toolchain-driven lint/test/build, aggregated into a single branch-protection gate.
   - `release-pipeline.yml` - Promotes builds through development/staging/production environments and records dry-run deployments.
-- `.github/pdm/deployments/` - Dry-run deployment records from the release pipeline (gitignored).
-- `.github/pdm/reports/` - Risk and quality-gate report artifacts (gitignored).
+- `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
+- `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
 
 ## Prerequisites
 
-- Docker Desktop running (act spawns per-job containers through the host engine).
-- [act](https://github.com/nektos/act) and [actionlint](https://github.com/rhysd/actionlint) installed (`brew install act actionlint`).
-- A `GITHUB_TOKEN` PAT exported in the shell: `export GITHUB_TOKEN=...` (or a gitignored `.secret` file sourced by the Makefile targets).
+- [actionlint](https://github.com/rhysd/actionlint) installed (`brew install actionlint`) for `make lint`.
+- The [GitHub CLI](https://cli.github.com/) (`gh auth login`) for the native PR verification loop.
+- Push access to the repository (workflows run on GitHub, not locally).
 
-## Local Testing
+## Testing (GitHub native)
 
-To test these GitHub Actions workflows locally without committing changes, use [act](https://github.com/nektos/act):
+Workflows are verified by running them on GitHub — no local Docker/`act` harness:
 
-```bash
-make sync && make lint   # mirror canonical workflows and validate them
-act pull_request --secret-file .secrets
-```
+1. Edit only `.github/pdm/workflows/`, then mirror and validate:
+   ```bash
+   make sync   # copy canonical workflows to .github/workflows/
+   make lint   # actionlint + drift check against the copies
+   ```
+2. Open a PR to `main` (or `make test-gh` to push + open/update the PR for the current branch). GitHub runs the PDM workflows natively:
+   - `quality-gate` (actionlint + lint/test/build) — required check
+   - `risk-health-check` (gitleaks + OSV + code health) — posts a PR comment
+   - `compliance-guardrail` (trufflehog) — posts a PR comment
+3. For non-PR runs (`workflow_dispatch`), reports and dry-run deployment records are uploaded as run artifacts instead of PR comments — download them from the run's "Artifacts" section.
+
+`push` to `main` also triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
 
 See `docs/ROADMAP.md` for the full delivery-engine roadmap and phase breakdown.

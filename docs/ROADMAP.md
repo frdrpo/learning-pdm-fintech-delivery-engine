@@ -7,14 +7,14 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 ## 2. Current State
 
 - **4 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
-  - `risk-health-check` — gitleaks + osv-scanner + code-health; posts PR comment or writes `.github/pdm/reports/`
+  - `risk-health-check` — gitleaks + osv-scanner + code-health; posts PR comment or uploads a report artifact on non-PR runs
   - `compliance-guardrail` — trufflehog base→head; posts PR comment
-  - `quality-gate` — actionlint + lint/test/build (no-op without a stack); gate job
-  - `release-pipeline` — build-info artifact; dry-run dev→staging→prod; writes `.github/pdm/deployments/`
-- **Local harness**: `Makefile` (`sync/lint/test/test-gate/test-deploy/test-all/dry-run`), `.act/` fixtures (`event.json`, `event.workflow_dispatch.json`) and `pdm-ci` Dockerfile.
-- **Toolchain**: act 0.2.89, actionlint 1.7.12, Docker Desktop, `GITHUB_TOKEN` PAT.
+  - `quality-gate` — actionlint + lint/test/build (no-op without a stack); gate job; posts comment / uploads report artifact
+  - `release-pipeline` — build-info artifact; dry-run dev→staging→prod; uploads deployment records on dry-run
+- **Testing is GitHub native**: workflows are verified by pushing a branch and opening a PR (`make test-gh`), plus `workflow_dispatch` runs for the release pipeline. No local `act`/Docker harness.
+- **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
-- **Known gaps**: no app stack; `.act/event.json` head.sha is stale; `opencode.json` untracked; `AGENTS.md` is gitignored.
+- **Known gaps**: `opencode.json` untracked; `AGENTS.md` is gitignored.
 
 ## 3. Parallelization Strategy
 
@@ -29,33 +29,31 @@ Phase 0 (hygiene) ──► Phase 1 (prove harness)
               └───────────────┴───────────────┘
 ```
 
-Phases 2–5 are **independent tracks** — each is planned/executed as its own branch + PR off `develop`, with its own planning session. Phase 1 is the shared prerequisite (validates the harness and refreshes fixtures before anyone builds on it).
+Phases 2–5 are **independent tracks** — each is planned/executed as its own branch + PR off `develop`, with its own planning session. Phase 1 is the shared prerequisite (validates workflows via GitHub-native runs before anyone builds on them).
 
 ## 4. Phase 0 — Hygiene & Baseline (prereq, ~1 session)
 
 **Goal:** clean tree, fresh fixtures, no blockers for parallel work.
 
 - **T0.1** Commit `opencode.json` (project git-permission config).
-- **T0.2** Refresh `.act/event.json` `pull_request.head.sha` to current HEAD (AGENTS.md gotcha: trufflehog hard-fails if `base.sha == head.sha`).
+- **T0.2** ~~Refresh `.act/event.json`~~ (`.act/` harness removed in favor of GitHub-native testing).
 - **T0.3** Decide `AGENTS.md` treatment — it's gitignored today; defer the decision to Phase 5 (T5.3 promotes its content into tracked docs).
-- **T0.4** Prereq checklist in README: Docker running, `export GITHUB_TOKEN`, act/actionlint installed.
+- **T0.4** Prereq checklist in README: `gh` CLI, actionlint, push access.
 
 **Acceptance:** `git status` clean; fixtures reference real SHAs; no drift.
 
 ## 5. Phase 1 — Prove the Harness (prereq for all tracks)
 
-**Goal:** every workflow runs green locally end-to-end, so later tracks have a trusted baseline.
+> **Superseded:** the local `act` harness was removed in favor of GitHub-native testing (see Phase 3). Historical notes below.
+
+**Goal (as originally scoped):** every workflow runs green locally end-to-end, so later tracks have a trusted baseline.
 
 - **T1.1** `make lint` → actionlint + drift check (expect pass).
-- **T1.2** Start Docker, load token, run the 4 fixture'd act commands (AGENTS.md):
-  - risk-health-check (`workflow_dispatch` fixture; `--env GITLEAKS_ENABLE_UPLOAD_ARTIFACT=false`)
-  - compliance-guardrail (`pull_request` fixture)
-  - quality-gate (`pull_request --bind`)
-  - release-pipeline (`workflow_dispatch --bind --artifact-server-path .act/artifacts`)
-- **T1.3** Verify artifacts land: `results.sarif`, `.github/pdm/reports/*.md`, `.github/pdm/deployments/*.md`.
-- **T1.4** Fix any failures/drift; re-run green. Optionally validate via the `pdm-ci` container path.
+- **T1.2** ~~Start Docker, load token, run the 4 fixture'd act commands.~~
+- **T1.3** Verify reports/records land as run artifacts (see Phase 3 native flow).
+- **T1.4** Fix any failures/drift; re-run green.
 
-**Acceptance:** all 4 workflows green locally; artifacts written; `make lint` still green.
+**Acceptance (current):** `make lint` green; workflows verified green via GitHub-native runs.
 
 ## 6. Phase 2 — Track A: Application Stack
 
@@ -72,8 +70,9 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 
 **Goal:** behave as a real PR gate + deployment pipeline on GitHub (not just locally).
 
+- **T3.0** Move workflow testing from local `act` to GitHub native: remove `.act/` fixtures + Dockerfile, strip `act` targets from the Makefile, add `make test-gh`, persist non-PR reports/deployment records as run artifacts. ✅ done
 - **T3.1** Create environments `development`/`staging`/`production` (+ approval rules for staging/prod).
-- **T3.2** Open a real PR from a feature branch → verify the 3 guardrail comments post.
+- **T3.2** Open a real PR from a feature branch → verify the 3 guardrail comments post (native loop is `make test-gh`). ✅ part of T3.0
 - **T3.3** Add `quality-gate` as a required status check on `main` (branch protection).
 - **T3.4** Exercise one real deployment API path (`createDeployment`), keeping `dry_run: true` as default.
 
@@ -89,16 +88,16 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 - **T4.4** Rollback + post-deploy verification steps in `release-pipeline`.
 - **T4.5** Wire the AI diff risk-review placeholder hook (noted in `risk-report`).
 
-**Acceptance per item:** canonical workflow added, `make sync`, `make lint` clean, local act run green.
+**Acceptance per item:** canonical workflow added, `make sync`, `make lint` clean, GitHub-native PR/dispatch run green.
 
 ## 9. Phase 5 — Track D: Documentation & Learning Material (starts day 1)
 
 **Goal:** make the repo a teachable artifact, tracked (not gitignored).
 
 - **T5.1** Architecture README: workflow map, job graph, env promotion chain.
-- **T5.2** Local runbook: act commands, how to add a workflow, sync discipline.
+- **T5.2** Native runbook: `make test-gh` PR loop, how to add a workflow, sync discipline.
 - **T5.3** Promote `AGENTS.md` content into tracked docs.
-- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, `--bind` necessity, comment-guard patterns).
+- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, GitHub-native testing over `act`, comment-guard patterns).
 
 **Acceptance:** docs tracked, linked from workflows, up to date with every merged phase.
 
@@ -109,7 +108,7 @@ Each phase is a **branch off `develop` + PR**, following the existing repo flow.
 ## 11. Definition of Done (every phase)
 
 - `make lint` green (no drift) after every change.
-- All affected `act` fixture runs green locally.
-- New workflows: canonical + synced copy; PR-comment or artifact path guarded for synthetic events.
-- No secrets committed; `.secret`, `dist/`, reports/deployments stay gitignored.
+- All affected workflows verified green via GitHub-native runs (PR + `workflow_dispatch`).
+- New workflows: canonical + synced copy; PR-comment or artifact-upload path guarded for non-PR events.
+- No secrets committed; run artifacts stay out of git.
 - Docs updated for any workflow change.
