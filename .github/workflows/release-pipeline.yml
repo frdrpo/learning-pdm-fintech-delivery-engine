@@ -144,7 +144,7 @@ jobs:
       - name: Record development deployment
         env:
           ENV_NAME: development
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const envName = process.env.ENV_NAME;
@@ -214,7 +214,7 @@ jobs:
       - name: Record staging deployment
         env:
           ENV_NAME: staging
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const envName = process.env.ENV_NAME;
@@ -284,7 +284,7 @@ jobs:
       - name: Record production deployment
         env:
           ENV_NAME: production
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const envName = process.env.ENV_NAME;
