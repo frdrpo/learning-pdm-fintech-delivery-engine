@@ -1,0 +1,250 @@
+name: PDM Release Deployment Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Deployment target environment (promotes through later stages)
+        type: choice
+        options:
+          - all
+          - development
+          - staging
+          - production
+        default: all
+      dry_run:
+        description: Dry-run only — skip GitHub Deployment API calls and write local summaries
+        type: boolean
+        default: true
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  build:
+    name: Build (assemble deployable)
+    runs-on: ubuntu-latest
+    outputs:
+      environment_chain: ${{ steps.chain.outputs.chain }}
+      real_deploy: ${{ steps.mode.outputs.real }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect application stack
+        id: stack
+        shell: bash
+        run: |
+          if [[ -f package.json || -f Dockerfile || -f pyproject.toml ]]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Assemble build info
+        shell: bash
+        run: |
+          mkdir -p dist
+          cat <<EOF > dist/build-info.json
+          {
+            "sha": "${{ github.sha }}",
+            "ref": "${{ github.ref_name }}",
+            "build_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "stack_found": "${{ steps.stack.outputs.found }}"
+          }
+          EOF
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-info
+          path: dist/build-info.json
+          retention-days: 1
+
+      - name: Compute promotion chain
+        id: chain
+        shell: bash
+        run: |
+          case "${{ inputs.environment || 'all' }}" in
+            development) chain="development" ;;
+            staging)     chain="staging,production" ;;
+            production)  chain="production" ;;
+            *)           chain="development,staging,production" ;;
+          esac
+          echo "chain=${chain}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve deployment mode
+        id: mode
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "push" || "${{ inputs.dry_run }}" == "false" ]]; then
+            echo "real=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "real=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: No stack note
+        if: steps.stack.outputs.found == 'false'
+        run: echo "No application stack detected; deployment steps are reference placeholders."
+
+  deploy-development:
+    name: Deploy to Development
+    needs: build
+    if: contains(needs.build.outputs.environment_chain, 'development')
+    environment: development
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-info
+          path: dist
+
+      - name: Deploy to development
+        shell: bash
+        run: |
+          echo "::notice::Deploying ${GITHUB_SHA} to development (placeholder — no deployment target configured)."
+          cat dist/build-info.json
+
+      - name: Record development deployment
+        env:
+          ENV_NAME: development
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const envName = process.env.ENV_NAME;
+            if ('${{ needs.build.outputs.real_deploy }}' === 'true') {
+              const resp = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.sha,
+                environment: envName,
+                auto_merge: false,
+                required_contexts: [],
+              });
+              console.log(`Created deployment ${resp.data.id} for ${envName}.`);
+            } else {
+              console.log(`Dry-run: skipping GitHub Deployment API for ${envName}.`);
+              const fs = require('fs');
+              const outDir = `${process.env.GITHUB_WORKSPACE}/.github/pdm/deployments`;
+              fs.mkdirSync(outDir, { recursive: true });
+              fs.writeFileSync(
+                `${outDir}/deploy-${envName}.md`,
+                `# Deployment: ${envName}\n\n- sha: ${context.sha}\n- ref: ${context.ref}\n- mode: dry-run\n`
+              );
+            }
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs:
+      - build
+      - deploy-development
+    if: always() && needs.build.result == 'success' && (needs.deploy-development.result == 'success' || needs.deploy-development.result == 'skipped') && contains(needs.build.outputs.environment_chain, 'staging')
+    environment: staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-info
+          path: dist
+
+      - name: Deploy to staging
+        shell: bash
+        run: |
+          echo "::notice::Deploying ${GITHUB_SHA} to staging (placeholder — approval via GitHub environment protection rules)."
+          cat dist/build-info.json
+
+      - name: Record staging deployment
+        env:
+          ENV_NAME: staging
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const envName = process.env.ENV_NAME;
+            if ('${{ needs.build.outputs.real_deploy }}' === 'true') {
+              const resp = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.sha,
+                environment: envName,
+                auto_merge: false,
+                required_contexts: [],
+              });
+              console.log(`Created deployment ${resp.data.id} for ${envName}.`);
+            } else {
+              console.log(`Dry-run: skipping GitHub Deployment API for ${envName}.`);
+              const fs = require('fs');
+              const outDir = `${process.env.GITHUB_WORKSPACE}/.github/pdm/deployments`;
+              fs.mkdirSync(outDir, { recursive: true });
+              fs.writeFileSync(
+                `${outDir}/deploy-${envName}.md`,
+                `# Deployment: ${envName}\n\n- sha: ${context.sha}\n- ref: ${context.ref}\n- mode: dry-run\n`
+              );
+            }
+
+  deploy-production:
+    name: Deploy to Production
+    needs:
+      - build
+      - deploy-staging
+    if: always() && needs.build.result == 'success' && (needs.deploy-staging.result == 'success' || needs.deploy-staging.result == 'skipped') && contains(needs.build.outputs.environment_chain, 'production')
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-info
+          path: dist
+
+      - name: Deploy to production
+        shell: bash
+        run: |
+          echo "::notice::Deploying ${GITHUB_SHA} to production (placeholder — approval via GitHub environment protection rules)."
+          cat dist/build-info.json
+
+      - name: Record production deployment
+        env:
+          ENV_NAME: production
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const envName = process.env.ENV_NAME;
+            if ('${{ needs.build.outputs.real_deploy }}' === 'true') {
+              const resp = await github.rest.repos.createDeployment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: context.sha,
+                environment: envName,
+                auto_merge: false,
+                required_contexts: [],
+              });
+              console.log(`Created deployment ${resp.data.id} for ${envName}.`);
+            } else {
+              console.log(`Dry-run: skipping GitHub Deployment API for ${envName}.`);
+              const fs = require('fs');
+              const outDir = `${process.env.GITHUB_WORKSPACE}/.github/pdm/deployments`;
+              fs.mkdirSync(outDir, { recursive: true });
+              fs.writeFileSync(
+                `${outDir}/deploy-${envName}.md`,
+                `# Deployment: ${envName}\n\n- sha: ${context.sha}\n- ref: ${context.ref}\n- mode: dry-run\n`
+              );
+            }
