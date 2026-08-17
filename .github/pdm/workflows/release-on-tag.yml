@@ -26,17 +26,19 @@ jobs:
         id: stack
         shell: bash
         run: |
-          if [[ -f package.json || -f Dockerfile || -f pyproject.toml ]]; then
+          if [[ -f frontend/package.json || -f Dockerfile || -f pyproject.toml ]]; then
             echo "found=true" >> "$GITHUB_OUTPUT"
           else
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build deployable
-        if: steps.stack.outputs.found == 'true' && hashFiles('**/package-lock.json') != ''
+        if: steps.stack.outputs.found == 'true' && hashFiles('frontend/pnpm-lock.yaml') != ''
+        working-directory: frontend
         run: |
-          npm ci
-          npm run build
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       - name: Assemble release info
         shell: bash

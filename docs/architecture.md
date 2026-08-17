@@ -2,12 +2,13 @@
 
 The delivery engine is the GitHub Actions setup under `.github/`. It implements the PDM (Product Delivery Management) delivery gates: shift-left security and compliance scanning, an aggregated quality gate, and a promotion pipeline across environments — all exercised natively on GitHub. "PDM" here means Product Delivery Management, **not** the Python package manager.
 
-The repo also carries a minimal Node 22 service (`package.json`, eslint, `node --test`, `scripts/build.mjs` producing `dist/`) so the quality gate and the release build have real work to do. Application code exists only to give the gates real work.
+The repo also carries a Next.js 16 frontend (`frontend/`, TypeScript + Tailwind v4 + Vitest, pnpm-managed) so the quality gate and the release build have real work to do. Application code exists only to give the gates real work.
 
 ## Layout: canonical vs mirrored
 
 - `.github/pdm/workflows/` — canonical workflow definitions, the source of truth.
 - `.github/workflows/` — byte-identical execution copies. GitHub only executes workflows from this directory.
+- `frontend/` — the Next.js application the gates exercise (pnpm stack).
 - `make sync` copies canonical workflows into `.github/workflows/`.
 - `make lint` runs actionlint on both trees **and** fails if the execution copies have drifted.
 
@@ -19,10 +20,10 @@ Run artifacts (reports, deployment records, release notes) are written under `.g
 
 | Workflow | Triggers | Jobs | Permissions | Outputs / artifacts |
 |---|---|---|---|---|
-| `risk-health-check.yml` | PR to `main` (opened / synchronize / reopened / ready_for_review); `workflow_dispatch` | `security` (gitleaks + OSV), `code-health` (npm lint/test), `risk-review` (AI-assisted diff risk review), `risk-report` (aggregate) | `contents: read`, `pull-requests: write` | PR comment on PR runs; `risk-report` artifact (`risk-report.md`) on non-PR runs |
+| `risk-health-check.yml` | PR to `main` (opened / synchronize / reopened / ready_for_review); `workflow_dispatch` | `security` (gitleaks + OSV), `code-health` (frontend lint/typecheck/test), `risk-review` (AI-assisted diff risk review), `risk-report` (aggregate) | `contents: read`, `pull-requests: write` | PR comment on PR runs; `risk-report` artifact (`risk-report.md`) on non-PR runs |
 | `compliance-guardrail.yml` | PR to `main`; `workflow_dispatch` | `compliance-scan` (trufflehog base-to-head) | `contents: read`, `pull-requests: write` (job-level) | pass/fail PR comment on PR runs; no artifact on non-PR runs |
-| `quality-gate.yml` | PR to `main`; `workflow_dispatch` | `workflow-lint` (actionlint), `code-quality` (lint/test/build), `gate` (single aggregated conclusion) | `contents: read`, `pull-requests: write` | required status check on `main`; PR comment or `gate-report` artifact (non-PR) |
-| `release-pipeline.yml` | push to `main`; `workflow_dispatch` with `environment` (default `all`), `dry_run` (default `true`), `rollback_to` | `build`, `deploy-development`, `deploy-staging`, `deploy-production`, `rollback` | `contents: read`, `deployments: write` | `build-info` artifact; dry-run `deploy-record-<env>.md` / `rollback.md` artifacts; real `createDeployment` calls when not dry-run |
+| `quality-gate.yml` | PR to `main`; `workflow_dispatch` | `workflow-lint` (actionlint), `code-quality` (frontend lint/typecheck/test/build), `gate` (single aggregated conclusion) | `contents: read`, `pull-requests: write` | required status check on `main`; PR comment or `gate-report` artifact (non-PR) |
+| `release-pipeline.yml` | push to `main`; `workflow_dispatch` with `environment` (default `all`), `dry_run` (default `true`), `rollback_to` | `build` (frontend `next build`), `deploy-development`, `deploy-staging`, `deploy-production`, `rollback` | `contents: read`, `deployments: write` | `build-info` artifact; dry-run `deploy-record-<env>.md` / `rollback.md` artifacts; real `createDeployment` calls when not dry-run |
 | `security-rescan.yml` | weekly schedule (Mon 02:00 UTC); `workflow_dispatch` | `gitleaks`, `osv`, `report` | `contents: read`, `issues: write` | `security-rescan-report` artifact; issue filed on blocking gitleaks findings on schedule runs |
 | `release-on-tag.yml` | push tags `v*` | `release` (build, release notes, GitHub Release) | `contents: write` | GitHub Release + `release-notes` artifact |
 
@@ -38,7 +39,7 @@ Three workflows gate every PR to `main`; `quality-gate` is the single required s
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
 risk-health-check    compliance-guardrail   quality-gate (required)
-gitleaks + OSV +     trufflehog base..head  actionlint + lint/test/build
+gitleaks + OSV +     trufflehog base..head  actionlint + lint/typecheck/test/build
 code-health + AI     posts pass/fail        single aggregated conclusion
 diff risk review;    PR comment             = required status check
 posts report comment

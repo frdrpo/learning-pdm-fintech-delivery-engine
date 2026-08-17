@@ -20,11 +20,13 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
+- `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests. This is the application the delivery gates exercise.
 
 ## Prerequisites
 
 - [actionlint](https://github.com/rhysd/actionlint) installed (`brew install actionlint`) for `make lint`.
 - The [GitHub CLI](https://cli.github.com/) (`gh auth login`) for the native PR verification loop.
+- [pnpm](https://pnpm.io/) (`brew install pnpm`) for `make test-frontend` (or corepack on Node <25).
 - Push access to the repository (workflows run on GitHub, not locally).
 
 ## Testing (GitHub native)
@@ -37,12 +39,23 @@ Workflows are verified by running them on GitHub — no local Docker/`act` harne
    make lint   # actionlint + drift check against the copies
    ```
 2. Open a PR to `main` (or `make test-gh` to push + open/update the PR for the current branch). GitHub runs the PDM workflows natively:
-   - `quality-gate` (actionlint + lint/test/build) — required check
+   - `quality-gate` (actionlint + lint/typecheck/test/build) — required check
    - `risk-health-check` (gitleaks + OSV + code health) — posts a PR comment
    - `compliance-guardrail` (trufflehog) — posts a PR comment
 3. For non-PR runs (`workflow_dispatch`), reports and dry-run deployment records are uploaded as run artifacts instead of PR comments — download them from the run's "Artifacts" section.
 
 `push` to `main` also triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
+
+## Frontend Testing
+
+The frontend in `frontend/` is developed test-first (Vitest) and verified with a native, container-free target that mirrors the PDM quality gate:
+
+```bash
+cd frontend && pnpm test:watch   # fast local TDD loop (Vitest watch)
+make test-frontend               # CI-parity: install + lint + typecheck + test + build
+```
+
+The `quality-gate` and `risk-health-check` workflows run the same suite (`pnpm install --frozen-lockfile` + lint/typecheck/test/build) against `frontend/` on every pull request.
 
 See `docs/ROADMAP.md` for the full delivery-engine roadmap and phase breakdown.
 
