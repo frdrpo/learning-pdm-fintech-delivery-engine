@@ -140,6 +140,8 @@ jobs:
 
       - name: Verify development deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying development at ${DEPLOY_VERIFY_URL}"
@@ -210,6 +212,8 @@ jobs:
 
       - name: Verify staging deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying staging at ${DEPLOY_VERIFY_URL}"
@@ -280,6 +284,8 @@ jobs:
 
       - name: Verify production deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying production at ${DEPLOY_VERIFY_URL}"
