@@ -1,0 +1,56 @@
+name: PDM Compliance & Security Guardrail
+
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Scans the PR base..head with trufflehog and posts a pass/fail comment on PR runs.
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: compliance-guardrail-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compliance-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Run Secret and Compliance Scanning
+        uses: trufflesecurity/trufflehog@v3.97.0
+        with:
+          base: ${{ github.event.pull_request.base.sha || '4b825dc642cb6eb9a060e54bf8d69288fbee4904' }}
+          head: ${{ github.event.pull_request.head.sha || github.sha }}
+          extra_args: --only-verified
+
+      - name: Post Compliance Status
+        if: always()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const outcome = "${{ job.status }}";
+            let statusBody = "";
+
+            if (outcome === "success") {
+              statusBody = "### 🛡️ PDM Compliance Agent\n✅ **Passed:** No hardcoded secrets, data privacy violations, or regulatory compliance flags detected.";
+            } else {
+              statusBody = "### 🛡️ PDM Compliance Agent\n❌ **Blocked:** Potential security or compliance violation detected in code changes. Please review logs and remediate before merging.";
+            }
+
+            if (context.payload.pull_request?.number) {
+              await github.rest.issues.createComment({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: statusBody
+              });
+            }

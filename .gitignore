@@ -1,0 +1,12 @@
+# Build + dependency output
+dist/
+node_modules/
+.node_modules/
+
+# PDM run artifacts (written to ephemeral GitHub runners or local dry-runs)
+.github/pdm/deployments/
+.github/pdm/reports/
+.github/pdm/releases/
+
+AGENTS.md
+.opencode

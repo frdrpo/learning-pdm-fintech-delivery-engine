@@ -1,0 +1,52 @@
+name: PDM Release Train Simulator
+
+# Docs: docs/plans/release-train-simulator.md (Phases 11-13) + ADR 0010.
+# Runs the deterministic release-train simulation headlessly and uploads a
+# clearly-labeled report artifact. The job creates NO deployments, releases,
+# PRs, or issues — the artifact is its only output, so delivery-telemetry
+# (which reads GitHub-native records only) stays truthful.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sim_config:
+        description: Optional JSON override of the simulation config
+        required: false
+        type: string
+        default: ''
+
+concurrency:
+  group: release-train-simulator
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  simulate:
+    name: Run release-train simulation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run release-train simulation
+        shell: bash
+        env:
+          SIM_CONFIG: ${{ inputs.sim_config }}
+        run: |
+          mkdir -p .github/pdm/reports
+          node --experimental-strip-types scripts/release-train-simulator.mts .github/pdm/reports
+          ls -la .github/pdm/reports/release-train-simulation-*
+
+      - name: Upload simulation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-train-simulation
+          path: .github/pdm/reports/release-train-simulation-*
+          retention-days: 7
