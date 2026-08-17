@@ -1,6 +1,6 @@
 # Learning PDM: Delivery Engine — Roadmap (Phases 8–10: "What's Next")
 
-Status: in-flight (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`. P8-T1 (first real gated promotion `develop` → `main`) merged as PR #84 (merge commit `e94d9ef`). P8-T2 real promotion flight done (run 32019424411: dev/staging/prod `createDeployment` records on `30f6193`). P8-T3 done (release `v0.1.0` on `e94d9ef`). P8-T4 done — baseline DORA readout (run 32022529571, window 90d): deployment frequency dev 0.62/wk, staging 0.47/wk, prod 0.47/wk; lead time median 32m; CFR and MTTR `insufficient-data` (per plan, until P10-T2's labeled drill).
+Status: in-flight (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`. **Phase 8 complete** — P8-T1 (first real gated promotion `develop` → `main`) merged as PR #84 (merge commit `e94d9ef`); P8-T2 real promotion flight (run 32019424411: dev/staging/prod `createDeployment` on `30f6193`); P8-T3 release `v0.1.0` on `e94d9ef`; P8-T4 baseline DORA readout (run 32022529571, 90d: DF dev 0.62/wk, staging 0.47/wk, prod 0.47/wk; LT median 32m; CFR/MTTR `insufficient-data` until P10-T2); P8-T5 GitHub Pages live verify target live (200 on `/` and `/simulator/`) with `release-pipeline` verify executing against `DEPLOY_VERIFY_URL` on dev/staging/prod (run 32023618678).
 
 ## 1. Purpose
 

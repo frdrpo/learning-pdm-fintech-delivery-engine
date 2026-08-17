@@ -152,7 +152,7 @@ Full scope and issue mapping live in `docs/plans/release-train-simulator.md`.
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–8 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch).
+> **Status:** Phases 0–8 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch). **Phase 8–10 chapter (maiden voyage)** in-flight — see `docs/plans/roadmap-phase-8-10-maiden-voyage.md`; Phase 8 (first real delivery flight: `develop`→`main` promotion, real dev/staging/prod deployments, release `v0.1.0`, baseline DORA telemetry, GitHub Pages live verify target) is complete.
 
 ## 14. Definition of Done (every phase)
 
