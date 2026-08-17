@@ -49,6 +49,12 @@ jobs:
             echo "found=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Build real deployable
+        if: steps.stack.outputs.found == 'true' && hashFiles('**/package-lock.json') != ''
+        run: |
+          npm ci
+          npm run build
+
       - name: Assemble build info
         shell: bash
         run: |

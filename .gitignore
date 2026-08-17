@@ -3,6 +3,8 @@
 actionlint
 results.sarif
 dist/
+node_modules/
+.node_modules/
 
 # PDM run artifacts now consolidate under .github/pdm
 .github/pdm/deployments/
