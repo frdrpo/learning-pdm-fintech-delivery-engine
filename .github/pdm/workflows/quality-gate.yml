@@ -1,5 +1,8 @@
 name: PDM Quality Gate (Status Check)
 
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# This is the required status check on main; it posts a gate summary comment or uploads a gate-report artifact on non-PR runs.
+
 on:
   pull_request:
     branches: [ main ]
