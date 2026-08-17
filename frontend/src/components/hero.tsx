@@ -36,10 +36,10 @@ export function Hero() {
             See the pipeline
           </a>
           <a
-            href="#workflows"
+            href="/simulator"
             className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-white/30"
           >
-            Explore workflows
+            Try the simulator
           </a>
         </div>
       </div>
