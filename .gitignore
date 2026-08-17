@@ -1,4 +1,17 @@
 # Local `act` runs leave these in the workdir — never commit them
 .secret
+actionlint
 results.sarif
+dist/
+
+# PDM run artifacts now consolidate under .github/pdm
+.github/pdm/deployments/
+.github/pdm/reports/
+
+# Deprecated root-level run artifacts (older runs may still leave these)
 risk-report.md
+gate-report.md
+deploy-*.md
+.act
+
+AGENTS.md
