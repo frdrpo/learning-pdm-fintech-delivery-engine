@@ -98,15 +98,20 @@ const mergedPulls = closedPulls
   .filter((p) => p.merged_at)
   .sort((a, b) => new Date(b.merged_at) - new Date(a.merged_at));
 
-// A "failure event" is any issue whose title signals a rollback or incident
-// (this repo records dry-run rollbacks as artifacts, so the GitHub-native proxy
-// is issue titles; a dedicated `rollback` label is an even stronger signal).
+// A "failure event" is any issue carrying a dedicated failure label
+// (`rollback`, `incident`, `outage`, `hotfix`, or `regression`). Title text is
+// deliberately NOT inspected: feature tasks (e.g. "Rollback + post-deploy
+// verification") often mention rollback and must not count as failures.
+// P10-T2's controlled drill files a deliberately labeled issue so CFR/MTTR
+// compute a real, intended value from a single event.
+const failureLabel = /^(rollback|incident|outage|hotfix|regression)$/i;
 const failureEvents = issues
   .filter(
     (i) =>
       !i.pull_request &&
       inWindow(i.created_at) &&
-      /(rollback|incident|outage|hotfix|regression)/i.test(i.title)
+      Array.isArray(i.labels) &&
+      i.labels.some((l) => failureLabel.test(l.name))
   )
   .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
@@ -165,10 +170,12 @@ const leadTimes = audit.merged_pulls
 const leadTimeHours = median(leadTimes);
 
 // Change failure rate: failure events in the window divided by deployments.
+// Like MTTR, CFR only computes when a failure event is actually on record —
+// a 0% CFR on placeholder/dry-run deployments would be invented confidence.
 const changeFailureRate =
-  audit.deployments.length > 0
+  failureEvents.length > 0 && audit.deployments.length > 0
     ? { status: 'computed', deployments: audit.deployments.length, failures: failureEvents.length, ratio: failureEvents.length / audit.deployments.length }
-    : fail('no deployments in window');
+    : fail('no failure events in window');
 
 // Time to recovery (proxy): median gap from a failure event to the next
 // deployment in any environment.
