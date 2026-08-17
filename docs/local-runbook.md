@@ -15,6 +15,18 @@ make lint   # actionlint on canonical + execution copies, then drift check
 
 Commit both trees together. `make lint` exits non-zero on drift.
 
+### After a Dependabot merge
+
+Dependabot only scans `.github/workflows/` (the standard GitHub Actions location), so its version bumps land in the execution copies and **not** in `.github/pdm/workflows/`. After each dependabot merge, adopt the bumps into the canonical tree and re-mirror:
+
+```sh
+make sync-deps   # copy bumped execution copies back into canonical
+make sync        # re-mirror canonical -> execution (no-op after sync-deps)
+make lint        # confirm no drift
+```
+
+Commit the re-synced canonical tree alongside the dependabot merge.
+
 ## `make test-gh` — the PR verification loop
 
 `make test-gh` does three things:
@@ -68,7 +80,7 @@ Scheduled and tag workflows:
 
 | Symptom | Cause and fix |
 |---|---|
-| `make lint` fails with `DRIFT: .github/workflows/ differs from .github/pdm/workflows/` | You edited the canonical tree without re-syncing. Run `make sync` and commit both sides. |
+| `make lint` fails with `DRIFT: .github/workflows/ differs from .github/pdm/workflows/` | You edited the canonical tree without re-syncing. Run `make sync` and commit both sides. If Dependabot bumped versions in `.github/workflows/`, run `make sync-deps && make sync` to adopt them into canonical. |
 | `actionlint: command not found` | actionlint is not installed. `brew install actionlint` (native on Apple Silicon). |
 | OSV step shows as skipped in `risk-health-check` / `security-rescan` | Expected — the scan only runs when dependency manifests exist (`hashFiles`); with none it is skipped. |
 | No PR comment posted on a `workflow_dispatch` run | Expected — comments are guarded by the pull request number; non-PR runs upload artifacts instead. |
