@@ -22,7 +22,7 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 - **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
 - **Docs**: architecture map, native runbook, agent guide, and ADR log tracked under `docs/`.
-- **Known gaps**: none open (Phase 0–6 complete). Next: Phase 7 (delivery telemetry & audit trail).
+- **Known gaps**: none open (Phase 0–7 complete). Phase 7 added delivery telemetry & audit trail atop GitHub's native records.
 
 ## 3. Parallelization Strategy
 
@@ -131,15 +131,15 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 - **T7.2** `delivery-telemetry.yml` — weekly schedule (Mon 02:30 UTC) + `workflow_dispatch`; runs the exporter with the built-in `GITHUB_TOKEN` and uploads `delivery-telemetry` (audit JSON + metrics JSON + markdown report) as a run artifact. ✅ done — `.github/pdm/workflows/delivery-telemetry.yml` + synced copy
 - **T7.3** ADR 0008 records the decision to compute telemetry from GitHub-native records over an external observability tool. ✅ done — `docs/decisions/0008-github-native-delivery-telemetry.md`
 - **T7.4** Docs updated: architecture workflow map + telemetry section, runbook results table, agent guide. ✅ done
-- **T7.5** Verify natively on GitHub: the three PR gates passed on the `main` verification PR (which actionlint-validated the new workflow too). The `delivery-telemetry` `workflow_dispatch` run itself can only execute once the workflow file exists on `main` (GitHub registers dispatch workflows from the default branch) — so artifact-upload verification lands when the phase reaches `main`: `gh workflow run delivery-telemetry.yml --ref develop`. ⏳ pending land-on-main → flips to ✅
+- **T7.5** Verify natively on GitHub: the three PR gates passed on the `main` verification PR (which actionlint-validated the new workflow too), and the `delivery-telemetry` `workflow_dispatch` run succeeded on `develop` (the default branch — GitHub registers dispatch workflows there) and uploaded the `delivery-telemetry` artifact (audit JSON + metrics JSON + markdown report). ✅ done
 
-**Acceptance:** `make lint` green; exporter tested against the live repo API; PR gates green on the `main` verification PR; telemetry/audit artifacts upload once the workflow is dispatchable from `main`.
+**Acceptance:** `make lint` green; exporter tested against the live repo API; PR gates green on the `main` verification PR; `workflow_dispatch` run on `develop` uploaded the telemetry/audit artifacts. ✅
 
 ## 12. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is implemented on `feat/phase7-delivery-telemetry` and green against the PR gates; the dispatch-based artifact check (T7.5) finishes once the workflow reaches `main`.
+> **Status:** Phases 0–7 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch).
 
 ## 13. Definition of Done (every phase)
 
