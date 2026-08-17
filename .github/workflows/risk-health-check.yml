@@ -1,0 +1,134 @@
+name: PDM Risk & Code Health Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  workflow_dispatch:
+
+concurrency:
+  group: risk-health-check-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  security-events: write
+
+jobs:
+  security:
+    name: Security (Secrets & Vulnerabilities)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+      - name: Vulnerability scan (OSV)
+        if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') != ''
+        uses: google/osv-scanner-action/osv-scanner-action@v1.8.5
+        with:
+          scan-args: |-
+            -r=.
+
+      - name: Note skipped vulnerability scan
+        if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') == ''
+        run: echo "No dependency manifests found; vulnerability scan skipped."
+
+  code-health:
+    name: Code Health (Shift-left quality)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect Node.js toolchain
+        id: detect
+        shell: bash
+        run: |
+          if [[ -f package.json ]]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Show health summary
+        run: echo "No lint/test gate configured for this repo yet. Code-health check passes by default."
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.found == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.detect.outputs.found == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.detect.outputs.found == 'true'
+        run: npm run lint
+
+      - name: Test
+        if: steps.detect.outputs.found == 'true'
+        run: npm test
+
+  risk-report:
+    name: Risk Report
+    needs:
+      - security
+      - code-health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build health summary
+        id: summary
+        shell: bash
+        run: |
+          {
+            echo "## PDM Risk & Code Health Check"
+            echo ""
+            echo "- **Secrets scan**: pass (gitleaks) or we would have failed this job."
+            echo "- **Dependency vulnerabilities**: scan runs when manifests exist; otherwise skipped."
+            echo "- **Code health**: lint + tests run when a toolchain is detected; otherwise no-op."
+            echo ""
+            echo "_Reviewer note: AI-assisted diff risk review is a placeholder hook to be wired to the agent runner once the repo has a real stack._"
+          } >> /tmp/risk-report.md
+
+      - name: Post risk report comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('/tmp/risk-report.md', 'utf8');
+            if (context.payload.pull_request?.number) {
+              const resp = await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+              console.log(`Posted comment ${resp.data.id}`);
+            } else {
+              console.log('Not a pull request; skipping comment.');
+              fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/risk-report.md`, body);
+            }

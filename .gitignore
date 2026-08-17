@@ -1,0 +1,4 @@
+# Local `act` runs leave these in the workdir — never commit them
+.secret
+results.sarif
+risk-report.md
