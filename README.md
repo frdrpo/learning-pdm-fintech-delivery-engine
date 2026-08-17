@@ -19,6 +19,12 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/reports/` - Risk and quality-gate report artifacts (gitignored).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
 
+## Prerequisites
+
+- Docker Desktop running (act spawns per-job containers through the host engine).
+- [act](https://github.com/nektos/act) and [actionlint](https://github.com/rhysd/actionlint) installed (`brew install act actionlint`).
+- A `GITHUB_TOKEN` PAT exported in the shell: `export GITHUB_TOKEN=...` (or a gitignored `.secret` file sourced by the Makefile targets).
+
 ## Local Testing
 
 To test these GitHub Actions workflows locally without committing changes, use [act](https://github.com/nektos/act):
@@ -27,3 +33,5 @@ To test these GitHub Actions workflows locally without committing changes, use [
 make sync && make lint   # mirror canonical workflows and validate them
 act pull_request --secret-file .secrets
 ```
+
+See `docs/ROADMAP.md` for the full delivery-engine roadmap and phase breakdown.
