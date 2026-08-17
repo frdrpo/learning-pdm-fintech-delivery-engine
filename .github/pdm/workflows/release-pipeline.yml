@@ -1,5 +1,8 @@
 name: PDM Release Deployment Pipeline
 
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Dry-run (default) writes deployment records; dry_run:false or push-to-main calls the Deployment API.
+
 on:
   push:
     branches:
@@ -19,6 +22,11 @@ on:
         description: Dry-run only — skip GitHub Deployment API calls and write local summaries
         type: boolean
         default: true
+      rollback_to:
+        description: Optional commit SHA to roll back to (records a rollback event, no API call)
+        type: string
+        default: ''
+        required: false
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -123,6 +131,16 @@ jobs:
           echo "::notice::Deploying ${GITHUB_SHA} to development (placeholder — no deployment target configured)."
           cat dist/build-info.json
 
+      - name: Verify development deployment
+        shell: bash
+        run: |
+          if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
+            echo "::notice::Verifying development at ${DEPLOY_VERIFY_URL}"
+            curl -fsS --max-time 30 "${DEPLOY_VERIFY_URL}" || { echo "::error::Verification failed for development"; exit 1; }
+          else
+            echo "::notice::No DEPLOY_VERIFY_URL set — skipping live verification for development."
+          fi
+
       - name: Record development deployment
         env:
           ENV_NAME: development
@@ -182,6 +200,16 @@ jobs:
         run: |
           echo "::notice::Deploying ${GITHUB_SHA} to staging (placeholder — approval via GitHub environment protection rules)."
           cat dist/build-info.json
+
+      - name: Verify staging deployment
+        shell: bash
+        run: |
+          if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
+            echo "::notice::Verifying staging at ${DEPLOY_VERIFY_URL}"
+            curl -fsS --max-time 30 "${DEPLOY_VERIFY_URL}" || { echo "::error::Verification failed for staging"; exit 1; }
+          else
+            echo "::notice::No DEPLOY_VERIFY_URL set — skipping live verification for staging."
+          fi
 
       - name: Record staging deployment
         env:
@@ -243,6 +271,16 @@ jobs:
           echo "::notice::Deploying ${GITHUB_SHA} to production (placeholder — approval via GitHub environment protection rules)."
           cat dist/build-info.json
 
+      - name: Verify production deployment
+        shell: bash
+        run: |
+          if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
+            echo "::notice::Verifying production at ${DEPLOY_VERIFY_URL}"
+            curl -fsS --max-time 30 "${DEPLOY_VERIFY_URL}" || { echo "::error::Verification failed for production"; exit 1; }
+          else
+            echo "::notice::No DEPLOY_VERIFY_URL set — skipping live verification for production."
+          fi
+
       - name: Record production deployment
         env:
           ENV_NAME: production
@@ -277,4 +315,38 @@ jobs:
         with:
           name: deploy-record-production
           path: .github/pdm/deployments/deploy-production.md
+          retention-days: 7
+
+  rollback:
+    name: Rollback (dry-run record)
+    needs: build
+    if: inputs.rollback_to != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Record rollback event
+        shell: bash
+        env:
+          TARGET_ENV: ${{ inputs.environment || 'all' }}
+          ROLLBACK_TO: ${{ inputs.rollback_to }}
+        run: |
+          mkdir -p .github/pdm/deployments
+          cat <<EOF > .github/pdm/deployments/rollback.md
+          # Rollback
+
+          - from: ${GITHUB_SHA}
+          - to: ${ROLLBACK_TO}
+          - environment chain: ${TARGET_ENV}
+          - recorded: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          - mode: dry-run (artifact record — no GitHub Deployment API call)
+          EOF
+          echo "Recorded rollback to ${ROLLBACK_TO}"
+
+      - name: Upload rollback record
+        uses: actions/upload-artifact@v4
+        with:
+          name: rollback-record
+          path: .github/pdm/deployments/rollback.md
           retention-days: 7

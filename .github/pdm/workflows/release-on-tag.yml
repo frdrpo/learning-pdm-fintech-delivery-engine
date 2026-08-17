@@ -1,0 +1,102 @@
+name: PDM Release on Tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect application stack
+        id: stack
+        shell: bash
+        run: |
+          if [[ -f package.json || -f Dockerfile || -f pyproject.toml ]]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build deployable
+        if: steps.stack.outputs.found == 'true' && hashFiles('**/package-lock.json') != ''
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble release info
+        shell: bash
+        run: |
+          mkdir -p dist .github/pdm/releases
+          {
+            echo "{"
+            echo "  \"tag\": \"${{ github.ref_name }}\","
+            echo "  \"sha\": \"${{ github.sha }}\","
+            echo "  \"built_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
+            echo "  \"stack_found\": \"${{ steps.stack.outputs.found }}\""
+            echo "}"
+          } > dist/release-info.json
+
+      - name: Generate release notes
+        shell: bash
+        run: |
+          mkdir -p .github/pdm/releases
+          notes_file=".github/pdm/releases/release-notes-${GITHUB_REF_NAME}.md"
+          {
+            echo "# Release ${GITHUB_REF_NAME}"
+            echo ""
+            echo "- **commit**: ${GITHUB_SHA}"
+            echo "- **built**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "- **stack**: ${{ steps.stack.outputs.found }}"
+            echo ""
+            echo "## Changes since the previous tag"
+          } > "${notes_file}"
+          previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          if [[ -n "${previous_tag}" && "${previous_tag}" != "${GITHUB_REF_NAME}" ]]; then
+            git log --oneline --no-merges "${previous_tag}..HEAD" >> "${notes_file}"
+          else
+            {
+              echo "_No previous tag found; showing the most recent commits._"
+              echo ""
+              git log --oneline --no-merges -20
+            } >> "${notes_file}"
+          fi
+          echo "Wrote ${notes_file}"
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = context.ref.replace('refs/tags/', '');
+            const fs = require('fs');
+            const notes = fs.readFileSync(`.github/pdm/releases/release-notes-${tag}.md`, 'utf8');
+            const resp = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              body: notes,
+              draft: false,
+            });
+            console.log(`Created release ${resp.data.html_url}`);
+
+      - name: Upload release notes artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: .github/pdm/releases/release-notes-${GITHUB_REF_NAME}.md
+          retention-days: 7
