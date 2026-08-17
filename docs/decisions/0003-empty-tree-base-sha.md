@@ -1,4 +1,4 @@
-# ADR 0001: Empty-tree base SHA for trufflehog
+# ADR 0003: Empty-tree base SHA for trufflehog
 
 - **Status:** Accepted
 

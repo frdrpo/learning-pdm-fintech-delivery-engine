@@ -1,4 +1,4 @@
-# ADR 0007: Test workflows natively on GitHub over a local act harness
+# ADR 0005: Test workflows natively on GitHub over a local act harness
 
 - **Status:** Accepted
 
@@ -18,5 +18,5 @@ Remove the `act` harness and Dockerfile. Workflows are verified by running them 
 
 - Runs are authoritative — they behave exactly as production GitHub would.
 - Feedback loop is one push plus a PR; no Docker or fixture files to maintain.
-- Non-PR results (reports, deployment records) are captured as run artifacts (ADR 0004), and PR review feedback lands as comments (ADR 0005).
+- Non-PR results (reports, deployment records) are captured as run artifacts, and PR review feedback lands as comments (see the artifact-persistence and comment-guard ADRs).
 - Requires `gh` CLI access and push access to the repository.

@@ -107,7 +107,7 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 - **T5.1** Architecture README: workflow map, job graph, env promotion chain. ✅ done — `docs/architecture.md`
 - **T5.2** Native runbook: `make test-gh` PR loop, how to add a workflow, sync discipline. ✅ done — `docs/local-runbook.md`
 - **T5.3** Promote `AGENTS.md` content into tracked docs. ✅ done — `docs/agents-guide.md`
-- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, GitHub-native testing over `act`, comment-guard patterns). ✅ done — `docs/decisions/` (0001–0007)
+- **T5.4** ADR-style decision log (empty-tree base SHA, dry-run default, `osv-scanner-action` subdir path, GitHub-native testing over `act`, comment-guard patterns). ✅ done — `docs/decisions/` (0001–0008)
 
 **Acceptance:** docs tracked, linked from workflows, up to date with every merged phase. ✅
 

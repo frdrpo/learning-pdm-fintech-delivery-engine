@@ -12,7 +12,7 @@ Compute delivery telemetry from GitHub's own API records and export it as run ar
 
 - `scripts/delivery-telemetry.mjs` reads the Deployments, Releases, Pulls, and Issues REST APIs (no external service, no new secrets).
 - It writes a durable audit-trail snapshot (`delivery-audit-<ts>.json`), a machine-readable metrics file (`delivery-telemetry-<ts>.json`), and a human-readable report (`delivery-telemetry-<ts>.md`).
-- A new `delivery-telemetry.yml` workflow runs weekly (plus on demand via `workflow_dispatch`) and uploads them as a run artifact, consistent with ADR 0004.
+- A new `delivery-telemetry.yml` workflow runs weekly (plus on demand via `workflow_dispatch`) and uploads them as a run artifact, consistent with ADR 0006.
 - Metrics that have no matching GitHub-native events yet are marked `insufficient-data` and explained rather than invented — a fresh repo or pure dry-run activity legitimately has none.
 
 ## Consequences
