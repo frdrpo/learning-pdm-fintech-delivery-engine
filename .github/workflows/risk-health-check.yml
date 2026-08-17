@@ -42,7 +42,7 @@ jobs:
 
       - name: Vulnerability scan (OSV)
         if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') != ''
-        uses: google/osv-scanner-action/osv-scanner-action@v1.8.5
+        uses: google/osv-scanner-action/osv-scanner-action@v2.5.0
         with:
           scan-args: |-
             -r=.
