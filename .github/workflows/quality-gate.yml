@@ -118,7 +118,7 @@ jobs:
         run: pnpm run build
 
   gate:
-    name: PDM Quality Gate
+    name: PDM Quality Gate (Status Check)
     needs: [ workflow-lint, code-quality ]
     if: always()
     runs-on: ubuntu-latest
