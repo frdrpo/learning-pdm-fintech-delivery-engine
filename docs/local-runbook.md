@@ -2,7 +2,7 @@
 
 Workflows are verified by running them on GitHub: open a PR and the PR gates execute natively; run the release pipeline via `workflow_dispatch`. There is no local `act`/Docker harness — nothing here needs a container (on Apple Silicon `actionlint` runs natively via Homebrew).
 
-Prerequisites: `gh` CLI (`gh auth login`), actionlint (`brew install actionlint`), and push access to the repo.
+Prerequisites: `gh` CLI (`gh auth login`), actionlint (`brew install actionlint`), pnpm (`brew install pnpm` for `make test-frontend`), and push access to the repo.
 
 ## Workflow editing loop
 
@@ -27,6 +27,17 @@ make lint        # confirm no drift
 
 Commit the re-synced canonical tree alongside the dependabot merge.
 
+## Frontend suite
+
+The quality gate and code-health jobs run the frontend suite against `frontend/` on every PR. Verify the same thing locally, container-free:
+
+```sh
+make test-frontend   # pnpm install --frozen-lockfile + lint + typecheck + test + build
+cd frontend && pnpm test:watch   # fast local TDD loop
+```
+
+`make test-frontend` needs pnpm on PATH (`brew install pnpm`; on Node <25 corepack also works). CI sets up pnpm with `pnpm/action-setup@v4` (pinned to the lockfile's version) before `actions/setup-node`, whose `cache: pnpm` requires pnpm to already be installed.
+
 ## `make test-gh` — the PR verification loop
 
 `make test-gh` does three things:
@@ -37,9 +48,9 @@ Commit the re-synced canonical tree alongside the dependabot merge.
 
 Opening that PR triggers the three PR workflows natively:
 
-- `risk-health-check` — gitleaks, OSV (skipped when no dependency manifests), npm lint/test, AI-assisted diff risk review, then a report comment.
+- `risk-health-check` — gitleaks, OSV (skipped when no dependency manifests), frontend lint/typecheck/test, AI-assisted diff risk review, then a report comment.
 - `compliance-guardrail` — trufflehog base-to-head, posts a pass/fail comment.
-- `quality-gate` — actionlint + lint/test/build aggregated into a single gate. This is the **required status check** on `main`, so it also gates mergeability.
+- `quality-gate` — actionlint + frontend lint/typecheck/test/build aggregated into a single gate. This is the **required status check** on `main`, so it also gates mergeability.
 
 Expect one comment per push on active PRs (workflows run on every `synchronize`).
 
@@ -88,5 +99,6 @@ Scheduled and tag workflows:
 | Staging/production deploy waiting indefinitely | Environment protection requires a reviewer — approve the run in the Actions UI. |
 | `gh: not authenticated` | Run `gh auth login`. |
 | `make test-gh` errors on push | Push access is required; check your remote and branch protection. |
+| `make test-frontend` fails with `pnpm: command not found` | pnpm is not installed. `brew install pnpm` (or use corepack on Node <25). |
 | Dry-run release produced no Deployment API records | Expected — `dry_run: true` (default) skips `createDeployment` and writes `deploy-<env>.md` artifacts instead. |
 | One comment per push on an active PR | Expected — the PR workflows re-run on every `synchronize`. |

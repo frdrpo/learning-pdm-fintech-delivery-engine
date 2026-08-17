@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps test-gh
+.PHONY: lint sync sync-deps test-frontend test-gh
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -17,6 +17,17 @@ sync-deps:
 	@mkdir -p $(PDM_WF)
 	@cp $(GH_WF)/*.yml $(PDM_WF)/
 	@echo "Adopted $(GH_WF) version bumps into $(PDM_WF); run 'make sync' to re-mirror."
+
+# Run the frontend suite natively (no container needed): install + lint +
+# typecheck + tests + build. Requires pnpm on PATH (brew install pnpm, or
+# corepack on Node <25). Mirrors what the PDM quality gate runs on every PR;
+# keep `pnpm test:watch` in frontend/ for fast local TDD feedback.
+test-frontend:
+	pnpm --dir frontend install --frozen-lockfile
+	pnpm --dir frontend run lint
+	pnpm --dir frontend run typecheck
+	pnpm --dir frontend test
+	pnpm --dir frontend run build
 
 # Validate workflow YAML syntax + expressions (no Docker required),
 # and fail if the GitHub execution copies have drifted from canonical.

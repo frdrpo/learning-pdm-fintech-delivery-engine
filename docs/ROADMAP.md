@@ -9,17 +9,19 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 - **6 canonical workflows** in `.github/pdm/workflows/`, byte-identical copies in `.github/workflows/` (currently in sync). `make lint` enforces no drift.
   - `risk-health-check` — gitleaks + osv-scanner + code-health + AI-assisted diff risk review (`scripts/risk-review.mjs`); posts PR comment or uploads a report artifact on non-PR runs
   - `compliance-guardrail` — trufflehog base→head; posts PR comment
-  - `quality-gate` — actionlint + lint/test/build; gate job; required status check on `main`; posts comment / uploads report artifact
+  - `quality-gate` — actionlint + frontend lint/typecheck/test/build; gate job; required status check on `main`; posts comment / uploads report artifact
   - `release-pipeline` — build-info artifact; post-deploy verify; dry-run dev→staging→prod; rollback record; uploads deployment records on dry-run
   - `security-rescan` — scheduled (weekly) + `workflow_dispatch` gitleaks + osv; uploads report artifact; files an issue on blocking findings
   - `release-on-tag` — `v*` tag push; builds, generates release notes, creates a GitHub Release
+- **Application stack**: a Next.js 16 frontend (`frontend/`, TypeScript + Tailwind v4 + Vitest, pnpm) that the quality gate, code-health, and release build exercise (Phase 6 replaced the earlier minimal Node service).
+- **Frontend tooling**: native `make test-frontend` (install + lint + typecheck + test + build) — no container; CI runs the same suite via `corepack`/`pnpm` in `frontend/`.
 - **Testing is GitHub native**: workflows are verified by pushing a branch and opening a PR (`make test-gh`), plus `workflow_dispatch` runs for the release pipeline. No local `act`/Docker harness.
 - **GitHub delivery**: environments `development`/`staging`/`production` exist with required-reviewer protection on staging/prod; real `createDeployment` exercised; `quality-gate` is a required status check on `main`.
 - **Dependency automation**: Dependabot configured for npm + GitHub Actions (target `develop`); version bumps are mirrored into canonical workflows by hand after merge.
 - **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
 - **Docs**: architecture map, native runbook, agent guide, and ADR log tracked under `docs/`.
-- **Known gaps**: none open (Phase 0–5 complete).
+- **Known gaps**: none open (Phase 0–6 complete). Next: Phase 7 (delivery telemetry & audit trail).
 
 ## 3. Parallelization Strategy
 
@@ -61,6 +63,8 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 **Acceptance (current):** `make lint` green; workflows verified green via GitHub-native runs.
 
 ## 6. Phase 2 — Track A: Application Stack
+
+> **Superseded:** the minimal Node service scaffolded here was replaced by the Next.js frontend in Phase 6. Historical notes below.
 
 **Goal:** give the quality gate and release pipeline real work.
 
@@ -106,13 +110,25 @@ Phases 2–5 are **independent tracks** — each is planned/executed as its own 
 
 **Acceptance:** docs tracked, linked from workflows, up to date with every merged phase. ✅
 
-## 10. Execution Model
+## 10. Phase 6 — Track D: Application Surface (Next.js frontend)
+
+**Goal:** replace the placeholder Node service with a real, test-first product surface so the gates exercise an actual application.
+
+- **T6.1** Land a Next.js 16 + TypeScript + Tailwind v4 app in `frontend/`, TDD'd with Vitest (components + unit tests). ✅ done — `frontend/` (landed from the earlier `feat/start-frontend` exploration)
+- **T6.2** Rewire the gates to the frontend stack: `quality-gate.code-quality` and `risk-health-check.code-health` set up pnpm via `pnpm/action-setup@v4` (pinned to the lockfile) before `actions/setup-node` (pnpm cache), then run install + lint + typecheck + test [+ build] in `frontend/`. ✅ done
+- **T6.3** Fix `release-pipeline.build` to actually build the frontend (`pnpm run build` → `.next`) instead of the removed root npm build. ✅ done
+- **T6.4** Remove the legacy app surface (`src/`, root `package.json`/lock, `eslint.config.js`, `scripts/build.mjs`) — keep `scripts/risk-review.mjs`. ✅ done
+- **T6.5** Native, container-free `make test-frontend` (pnpm; corepack on Node <25) mirroring the gate suite; docs updated. ✅ done
+
+**Acceptance:** `make test-frontend` green, `make sync`/`make lint` clean, GitHub-native PR run green. ✅
+
+## 11. Execution Model
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–5 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
+> **Status:** Phases 0–6 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`. Phase 7 (delivery telemetry & audit trail) is the next track.
 
-## 11. Definition of Done (every phase)
+## 12. Definition of Done (every phase)
 
 - `make lint` green (no drift) after every change.
 - All affected workflows verified green via GitHub-native runs (PR + `workflow_dispatch`).

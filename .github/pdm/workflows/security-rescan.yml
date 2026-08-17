@@ -41,7 +41,7 @@ jobs:
         uses: google/osv-scanner-action/osv-scanner-action@v2.5.0
         with:
           scan-args: |-
-            -r=.
+            --recursive .
 
       - name: Note skipped vulnerability scan
         if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') == ''
