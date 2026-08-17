@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync test test-gate test-deploy test-all dry-run
+.PHONY: lint sync test-gh
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -12,7 +12,7 @@ sync:
 # Validate workflow YAML syntax + expressions (no Docker required),
 # and fail if the GitHub execution copies have drifted from canonical.
 lint:
-	actionlint $(PDM_WF)/*.yml
+	actionlint $(PDM_WF)/*.yml $(GH_WF)/*.yml
 	@if diff -r $(PDM_WF) $(GH_WF) >/dev/null 2>&1; then \
 		echo "OK: execution copies are in sync with $(PDM_WF)"; \
 	else \
@@ -20,34 +20,18 @@ lint:
 		exit 1; \
 	fi
 
-# Run the risk-health-check workflow against a synthesized PR event
-test:
-	@[ -f .secret ] && . ./.secret; \
-	act pull_request -W $(PDM_WF)/risk-health-check.yml -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN}
-
-# Run the quality gate workflow locally against a synthesized PR event
-test-gate:
-	@[ -f .secret ] && . ./.secret; \
-	act pull_request --bind -W $(PDM_WF)/quality-gate.yml \
-		-e .act/event.json -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN}
-
-# Run the release deployment pipeline locally as a dry-run (workflow_dispatch fixture)
-test-deploy:
-	@[ -f .secret ] && . ./.secret; \
-	act workflow_dispatch --bind --artifact-server-path .act/artifacts \
-		-W $(PDM_WF)/release-pipeline.yml \
-		-e .act/event.workflow_dispatch.json -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN}
-
-# Run all workflows locally
-test-all:
-	@[ -f .secret ] && . ./.secret; \
-	act pull_request -W $(PDM_WF)/risk-health-check.yml -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN} && \
-	act pull_request -W $(PDM_WF)/compliance-guardrail.yml -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN} && \
-	act pull_request --bind -W $(PDM_WF)/quality-gate.yml -e .act/event.json -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN} && \
-	act workflow_dispatch --bind --artifact-server-path .act/artifacts \
-		-W $(PDM_WF)/release-pipeline.yml \
-		-e .act/event.workflow_dispatch.json -s GITHUB_TOKEN=$${GITHUB_TOKEN:?set GITHUB_TOKEN}
-
-# Dry-run a single job without executing it
-dry-run:
-	 act -n -W $(PDM_WF)/compliance-guardrail.yml -j compliance-scan
+# Verify the PDM workflows natively on GitHub: push the current branch and open
+# (or update) a PR to main so the pull_request triggers execute, then surface
+# the run status. Requires the gh CLI (gh auth login).
+test-gh:
+	@BRANCH=$$(git symbolic-ref --short HEAD); \
+	echo "Pushing $$BRANCH and opening a PR to main (PDM workflows will run natively)..."; \
+	git push -u origin $$BRANCH; \
+	if ! gh pr view $$BRANCH --json number --jq .number >/dev/null 2>&1; then \
+		gh pr create --base main --head $$BRANCH \
+			--title "PDM workflow run ($$BRANCH)" \
+			--body "Opened by \`make test-gh\` to run the PDM quality gates natively on GitHub."; \
+	fi; \
+	echo ""; \
+	echo "Watching the latest run for $$BRANCH (Ctrl-C to stop watching; checks keep running):"; \
+	gh pr checks --watch $$BRANCH

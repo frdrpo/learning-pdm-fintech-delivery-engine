@@ -1,17 +1,10 @@
-# Local `act` runs leave these in the workdir — never commit them
-.secret
-actionlint
-results.sarif
+# Build + dependency output
 dist/
+node_modules/
+.node_modules/
 
-# PDM run artifacts now consolidate under .github/pdm
+# PDM run artifacts (written to ephemeral GitHub runners or local dry-runs)
 .github/pdm/deployments/
 .github/pdm/reports/
-
-# Deprecated root-level run artifacts (older runs may still leave these)
-risk-report.md
-gate-report.md
-deploy-*.md
-.act
 
 AGENTS.md
