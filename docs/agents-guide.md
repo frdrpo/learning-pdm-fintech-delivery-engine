@@ -34,6 +34,7 @@ Edit only `.github/pdm/workflows/` and re-sync. Open a PR to `main` and GitHub r
 ## Hard-earned gotchas
 
 - **`osv-scanner-action@v1` does not exist.** Use `google/osv-scanner-action/osv-scanner-action@v2.5.0` (the real action lives in the `osv-scanner-action/` subdir). The OSV step only runs when dependency manifests exist (`hashFiles`); with none it's skipped — that's expected.
+- **osv-scanner v2 CLI changed the `-r` flag**: `-r=.` is now a parse error (`-r` is the boolean `--recursive`). Use `scan-args: --recursive .`.
 - **github-script v7** already injects `context` and `github`; never redeclare `const { context } = …`. Comment-posting steps are guarded with `context.payload.pull_request?.number` so non-PR runs don't hit the API.
 - **Cross-job files don't persist on GitHub** (each job gets a fresh workspace). Each workflow that writes reports/records must upload them as run artifacts from the same job that wrote them; artifacts use `if: !github.event.pull_request` (or `real_deploy == 'false'`) guards.
 - **Workflows run on every PR synchronize** and each posts a comment — expect a comment per push on active PRs.
