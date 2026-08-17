@@ -45,3 +45,11 @@ Workflows are verified by running them on GitHub — no local Docker/`act` harne
 `push` to `main` also triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
 
 See `docs/ROADMAP.md` for the full delivery-engine roadmap and phase breakdown.
+
+## Documentation Shortcuts
+
+- [docs/architecture.md](docs/architecture.md) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
+- [docs/local-runbook.md](docs/local-runbook.md) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
+- [docs/agents-guide.md](docs/agents-guide.md) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
+- [docs/decisions/](docs/decisions/) — ADR decision log for the delivery engine.
+- [docs/ROADMAP.md](docs/ROADMAP.md) — full delivery-engine roadmap and phase breakdown.
