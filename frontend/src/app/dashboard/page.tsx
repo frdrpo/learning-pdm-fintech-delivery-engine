@@ -2,34 +2,12 @@ import type { Metadata } from "next";
 import { CompliancePosture } from "@/components/compliance-posture";
 import { DeliveryDashboard } from "@/components/delivery-dashboard";
 import { FeatureStatusCard } from "@/components/feature-status-card";
-import { TrainBoard } from "@/components/train-board";
-import {
-  boardingTrain,
-  buildTrainCalendar,
-  daysUntilDate,
-} from "@/lib/train-board";
 
 export const metadata: Metadata = {
   title: "Delivery Dashboard",
   description:
-    "A delivery-readiness view: quality gates, the release-train calendar, compliance posture, and feature boarding status.",
+    "A delivery-readiness view: quality gates, the next release-train window, compliance posture, and feature boarding status.",
 };
-
-const TRAIN_CALENDAR = (() => {
-  const now = new Date();
-  const slots = buildTrainCalendar({
-    anchor: new Date("2026-08-17T10:33:21.000Z"),
-    now,
-    intervalDays: 14,
-    cutoffDays: 3,
-    count: 3,
-    releaseDates: [
-      { tag: "v0.1.0", publishedAt: new Date("2026-08-17T10:33:21.000Z") },
-      { tag: "v0.2.0", publishedAt: new Date("2026-08-18T02:39:39.000Z") },
-    ],
-  });
-  return { slots, now, boarding: boardingTrain(slots) };
-})();
 
 const SNAPSHOT = {
   gates: {
@@ -47,9 +25,7 @@ const SNAPSHOT = {
       build: "pass",
       compliance: "pass",
     } as const,
-    daysUntilTrain: TRAIN_CALENDAR.boarding
-      ? daysUntilDate(TRAIN_CALENDAR.boarding.departure, TRAIN_CALENDAR.now)
-      : 0,
+    daysUntilTrain: 5,
   },
 };
 
@@ -103,13 +79,6 @@ export default function DashboardPage() {
       </header>
       <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
         <DeliveryDashboard gates={SNAPSHOT.gates} train={SNAPSHOT.train} />
-        <section className="mt-8">
-          <TrainBoard
-            slots={TRAIN_CALENDAR.slots}
-            now={TRAIN_CALENDAR.now}
-            readiness={SNAPSHOT.train}
-          />
-        </section>
         <section className="mt-8 grid gap-6 lg:grid-cols-2">
           <CompliancePosture controls={CONTROLS} />
           <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
@@ -126,8 +95,6 @@ export default function DashboardPage() {
         <p className="mt-8 text-center text-xs text-slate-500">
           Sample snapshot for illustration — the live view is generated from
           GitHub-native delivery records by scripts/delivery-telemetry.mjs.
-          Train windows follow the ADR 0009 calendar (anchored 2026-08-17,
-          14-day interval, 3-day readiness cutoff).
         </p>
       </main>
       <footer className="border-t border-white/10 py-10 text-center text-sm text-slate-500">
