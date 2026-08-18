@@ -106,6 +106,29 @@ telemetry truthing)            (docs/ + external repo)
 - **P16-T2/T3/T4 execution runbook (prepared 2026-08-18).**
   - **Guard:** no `main`→`develop` merges until the promotion PR merges (the #143 unpromotion would otherwise delete the boarded increment from `develop`).
   - **T2 — at/after 2026-08-28 (cutoff):** (1) date check ≥ 08-28; (2) open PR `develop`→`main`, title `feat(P16): promote train-2 readiness view to production base` (clean title, no failure labels); (3) confirm all 8 native PR checks pass; (4) squash-merge; (5) `release-pipeline` fires automatically on the `push` to `main` with `real_deploy=true` → verify real `createDeployment` records on `development`/`staging`/`production` for the promoted SHA (Deployment API) and the `DEPLOY_VERIFY_URL` curl (expect 200); (6) record run IDs + deployment IDs in this plan + issue #124. Expected payload: 6 files, +470/−3 as of 2026-08-18 (train-board view + dashboard wiring + pre-flight/runbook doc note) — re-verify with `git diff --stat main..develop` before opening the PR.
+      - **Drafted PR (copy-paste ready):** title `feat(P16): promote train-2 readiness view to production base`, body:
+
+        ```markdown
+        ## What this promotes
+
+        `develop` → `main` (commits since `6288e8ad`): the **train-2 readiness view**, boarded for train 2 ahead of its readiness cutoff.
+
+        - `feat(frontend)`: train-board readiness view — `train-board.tsx` + `train-board.ts` + Vitest tests, wired into the delivery dashboard (extends the Phase 9 surface with the ADR 0009 train calendar and the `delivery.ts` readiness model)
+        - `docs(plan)`: P16-T1 boarding + verification, pre-flight & leak-correction notes, T2/T3/T4 execution runbook, expected-payload refresh
+
+        Payload: 6 files, +470/−3 — train-board view + dashboard wiring + plan-doc notes.
+
+        ## Cadence context
+
+        - Boarded ahead of train 2's readiness cutoff (2026-08-28); train 2 departs 2026-08-31. This is the in-window promotion of the boarded increment per ADR 0011 — `v0.3.0` is released separately via the milestone-gated `release-on-tag` inside [08-31, 09-14).
+        - Clean title: no failure-classifier labels.
+
+        ## Verification
+
+        - The three PR gates run natively on this PR: `quality-gate` + `risk-health-check` + `compliance-guardrail` (8 checks).
+        - On merge, `push` to `main` triggers `release-pipeline` for real: `createDeployment` records on development → staging → production for the promoted SHA (manual approval on staging/prod) and the `DEPLOY_VERIFY_URL` live curl (expect HTTP 200).
+        - Run IDs + deployment IDs recorded in the chapter plan + issue #124.
+        ```
   - **T3 — inside [08-31, 09-14):** (1) date check in window; (2) close milestone `v0.3.0` (#16); (3) dispatch `PDM Release on Tag` with `version: 0.3.0`; (4) confirm `frontend/package.json` bumped on `develop`, tag `v0.3.0` created, GitHub Release published with the AI-drafted notes appended, `release-cut-summary` artifact uploaded; (5) record run ID + release URL.
   - **T4 — after the release:** (1) dispatch `PDM Delivery Telemetry & Audit Trail`; (2) confirm the readout: on-time 3/3 (v0.1.0/v0.2.0 in train 1, v0.3.0 in train 2), CFR/MTTR real-and-explained; (3) record the readout in ROADMAP §13 and the train calendar (train 2 ✅, train 3 pending, windows advanced).
 - **P16-T2** — Promote to the production base branch at/after the cutoff (08-28) per ADR 0011; confirm real `createDeployment` records on dev/staging/prod for the promoted commit and the `DEPLOY_VERIFY_URL` live check actually curls. *Gates:* `release-pipeline`, `quality-gate`. *Touchpoints:* PR + merge flow.
