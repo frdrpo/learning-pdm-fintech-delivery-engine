@@ -60,7 +60,7 @@ flowchart LR
     RP -->|dry_run: false / push| RP2["GitHub Deployment API (real deployments)"]
 
     M -.->|push to develop| PP["publish-pages → GitHub Pages (live verify target)"]
-    M -.->|dispatch v* (milestone-gated)| RT["release-on-tag → GitHub Release"]
+    M -.->|dispatch v* · milestone-gated| RT["release-on-tag → GitHub Release"]
 
     subgraph Scheduled["Scheduled + on demand"]
         SR["security-rescan — weekly Mon 02:00 UTC"]
