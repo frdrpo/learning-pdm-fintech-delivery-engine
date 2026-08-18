@@ -45,6 +45,9 @@ jobs:
         id: rehearsal
         shell: bash
         run: |
+          # actionlint installs to $GITHUB_WORKSPACE/actionlint; the rehearsal's
+          # nested `make lint` runs from $RUNNER_TEMP — put it on PATH.
+          export PATH="$GITHUB_WORKSPACE:$PATH"
           CONSUMER="$RUNNER_TEMP/pdm-consumer"
           echo "consumer=$CONSUMER" >> "$GITHUB_OUTPUT"
           node scripts/consumer-smoke.mjs --root "$GITHUB_WORKSPACE" --consumer "$CONSUMER"
