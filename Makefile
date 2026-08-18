@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps test-frontend test-gh
+.PHONY: lint sync sync-deps test-frontend test-gh test-consumer-path topology-check topology-apply
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -55,3 +55,19 @@ test-gh:
 	echo ""; \
 	echo "Watching the latest run for $$BRANCH (Ctrl-C to stop watching; checks keep running):"; \
 	gh pr checks --watch $$BRANCH
+
+# P17 copy-kit rehearsal (the plan's documented substitution for a second repo):
+# execute the kit §1 copy commands literally into a scratch consumer workspace,
+# then run the engine's offline checks INSIDE that workspace + the kit §8 matrix.
+# Requires actionlint + pnpm on PATH (homebrew pnpm on macOS; see AGENTS.md).
+test-consumer-path:
+	@node scripts/consumer-smoke.mjs --root . $(REHEARSAL_ARGS)
+
+# Kit §2: idempotent topology check/apply against the live repo (gh CLI).
+# `make topology-check` verifies the documented target state; `make topology-apply`
+# converges it (protection, environments, Pages, DEPLOY_VERIFY_URL).
+topology-check:
+	@node scripts/wire-topology.mjs --check $(TOPOLOGY_REPO)
+
+topology-apply:
+	@node scripts/wire-topology.mjs --apply $(TOPOLOGY_REPO)
