@@ -18,7 +18,7 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 - **Frontend tooling**: native `make test-frontend` (install + lint + typecheck + test + build) — no container; CI runs the same suite via `corepack`/`pnpm` in `frontend/`.
 - **Testing is GitHub native**: workflows are verified by pushing a branch and opening a PR (`make test-gh`), plus `workflow_dispatch` runs for the release pipeline. No local `act`/Docker harness.
 - **GitHub delivery**: environments `development`/`staging`/`production` exist with required-reviewer protection on staging/prod; real `createDeployment` exercised; `quality-gate` is a required status check on `main`.
-- **Dependency automation**: Dependabot configured for npm + GitHub Actions (target `develop`); version bumps are mirrored into canonical workflows by hand after merge.
+- **Dependency automation**: Dependabot configured for GitHub Actions (root) + npm (pointed at `frontend/` since Phase 6 moved the app there), both targeting `develop`; version bumps are mirrored into canonical workflows by hand after merge.
 - **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
 - **Docs**: architecture map, native runbook, agent guide, and ADR log tracked under `docs/`.
