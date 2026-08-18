@@ -11,10 +11,13 @@ Adopt this delivery engine in a fresh product without reading every ADR. This is
 ## 1. Copy the engine
 
 ```sh
+mkdir front-end-root-for-you
 cp -R .github front-end-root-for-you/.github \
-  && cp Makefile scripts front-end-root-for-you/ \
-  && cp README.md AGENTS.md front-end-root-for-you/
+  && cp -R Makefile scripts front-end-root-for-you/ \
+  && cp -R README.md AGENTS.md front-end-root-for-you/
 ```
+
+- `scripts` and `.github` are directories, so `cp -R` is required — a bare `cp Makefile scripts …` errors out ("is a directory").
 
 - The canonical workflows live in `.github/pdm/workflows/`; `.github/workflows/` holds the GitHub-only execution copies. **Edit only the canonical tree**, then `make sync` and both trees are committed together (`make lint` fails on drift).
 - `scripts/` is engine code: `risk-review.mjs` (diff risk), `delivery-telemetry.mjs` (DORA + train telemetry), `release-train-simulator.mts`, plus any `release-summary.mjs`.
@@ -75,3 +78,7 @@ Never commit: run artifacts, secrets, `.env`, generated `dist/`/`out/` trees. Te
 - Cross-job files don't persist on GitHub — upload artifacts from the job that writes them.
 - `github-script@v7` already injects `context`/`github`; never redeclare them.
 - Dependabot only scans `.github/workflows/` — always `make sync-deps` after a bump merges.
+- Fresh-repo expectations (validated by a local rehearsal, 2026-08-18):
+  - `make test-frontend` fails until you bring an app into `frontend/` (kit §3) — that is expected, not a breakage of the engine.
+  - `make test-gh` is GitHub-side by design: it pushes a branch and opens a PR, so it only works where you have push access + `gh` auth against a live remote. Locally, `make lint` + `make test-frontend` are the offline checks.
+  - Telemetry in a fresh repo reports `insufficient-data` until real delivery events exist — honest, not broken.
