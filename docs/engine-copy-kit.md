@@ -19,6 +19,12 @@ cp -R .github front-end-root-for-you/.github \
 
 - `scripts` and `.github` are directories, so `cp -R` is required — a bare `cp Makefile scripts …` errors out ("is a directory").
 
+- Write a root `.gitignore` before the first commit so engine run artifacts never land in git (verified by the copy-kit smoke, check A4):
+  ```sh
+  printf 'dist/\nnode_modules/\n.node_modules/\n.github/pdm/deployments/\n.github/pdm/reports/\n.github/pdm/releases/\n' \
+    > front-end-root-for-you/.gitignore
+  ```
+
 - The canonical workflows live in `.github/pdm/workflows/`; `.github/workflows/` holds the GitHub-only execution copies. **Edit only the canonical tree**, then `make sync` and both trees are committed together (`make lint` fails on drift).
 - `scripts/` is engine code: `risk-review.mjs` (diff risk), `delivery-telemetry.mjs` (DORA + train telemetry), `release-train-simulator.mts`, plus any `release-summary.mjs`.
 
@@ -26,7 +32,9 @@ cp -R .github front-end-root-for-you/.github \
 
 - **Two-branch model (ADR 0011):** `develop` is your **default** and integration branch (unprotected; release bumps and dependabot land here), `main` is the protected production branch. The engine's mechanisms depend on `develop` existing: `release-on-tag` syncs from / bumps `develop`, `publish-pages` triggers on pushes to `develop`, and dependabot targets `develop`.
 - Protect `main`: require `PDM Quality Gate (Status Check)` and pull-request reviews. `develop` is your integration branch — protected PRs into it too if you want.
-- Create environments `development` / `staging` / `production` and, for staging+production, add `required_reviewers` (any two of your approvers).
+- **Automate the wiring** (this repo ships it): `make topology-check` verifies the target state against the live API; `make topology-apply` converges it idempotently (`scripts/wire-topology.mjs` — protection, environments, Pages, `DEPLOY_VERIFY_URL`). Branch creation/parity stays git-side. Hand-typing these API calls cost real time in the P17 flight — use the Make targets.
+- **GitHub Pages requires a *public* repo on the free plan** (`422 "Your current plan does not support GitHub Pages"` on private). Decide the Pages deploy path up front and create the consumer public; the reference is public for this reason.
+- **`required_reviewers` on staging/production come from `PUT /repos/{owner}/{repo}/environments/{env}` with `"reviewers":[…]`** — the `.../protection_rules` PUT endpoint is Enterprise-only custom rules and 404s on free. (`make topology-apply` creates `development` / `staging` / `production` and wires the reviewers for you.)
 - Decide the deployment target for each environment. For a static frontend, publish to GitHub Pages (`github-pages` environment) and set `DEPLOY_VERIFY_URL` so the post-deploy verify step curls a live URL instead of skipping.
 - **If `develop` is deleted later** (branch drift — it happened in this repo, 2026-08-18), restore it at `main` parity and re-set it as the default branch before the next release cut:
   ```sh
@@ -84,7 +92,14 @@ Never commit: run artifacts, secrets, `.env`, generated `dist/`/`out/` trees. Te
 - Cross-job files don't persist on GitHub — upload artifacts from the job that writes them.
 - `github-script@v7` already injects `context`/`github`; never redeclare them.
 - Dependabot only scans `.github/workflows/` — always `make sync-deps` after a bump merges.
-- Fresh-repo expectations (validated by a local rehearsal, 2026-08-18):
+- Fresh-repo expectations (validated against a real consumer flight + the in-repo rehearsal, 2026-08-18):
   - `make test-frontend` fails until you bring an app into `frontend/` (kit §3) — that is expected, not a breakage of the engine.
   - `make test-gh` is GitHub-side by design: it pushes a branch and opens a PR, so it only works where you have push access + `gh` auth against a live remote. Locally, `make lint` + `make test-frontend` are the offline checks.
   - Telemetry in a fresh repo reports `insufficient-data` until real delivery events exist — honest, not broken.
+- GitHub-side behaviors measured in the P17 consumer flight (all folded into this kit):
+  - **GitHub Pages needs a public repo on the free plan** — create the consumer public from the start (see §2).
+  - **`gh repo edit --visibility public` requires `--accept-visibility-change-consequences`**; without it gh exits 1 with usage, and a pre-guardrail gh version exits 0 silently without changing anything.
+  - **A first promotion PR needs content:** `gh pr create` refuses "No commits between main and develop" while branches are at parity — do the work on `develop` first, then promote.
+  - **`required_reviewers` is set on the environment PUT, not `protection_rules`** (Enterprise-only, 404s) — see §2.
+  - **Dispatch workflows and `gh workflow list` can 404 for a few minutes** right after repo creation/merge (workflows register against the default branch); wait and retry instead of diagnosing a mis-wire.
+  - **Scratch external repos are fragile** — one vanished mid-flight in P17 with no trail. `make test-consumer-path` rehearses the whole §1→§8 path in a throwaway workspace on a fresh runner as the documented substitution (evidence: `docs/evidence/p17-consumer-repo-flight.md`). It is a rehearsal, never labeled adoption.
