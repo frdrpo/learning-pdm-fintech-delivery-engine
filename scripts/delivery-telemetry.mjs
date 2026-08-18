@@ -17,6 +17,7 @@
 //   GITHUB_REPOSITORY  owner/repo (set natively by GitHub Actions)
 //   GITHUB_API_URL     API base, defaults to https://api.github.com
 //   LOOKBACK_DAYS      measurement window, default 90
+//   TRAIN_INTERVAL_DAYS release-train cadence for the on-time signal, default 14
 //
 // Undefined metrics are reported as "insufficient-data" rather than failing:
 // GitHub-native records are the source of truth, and a fresh repo (or pure
@@ -35,6 +36,7 @@ mkdirSync(outDir, { recursive: true });
 const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 const lookbackDays = Number(process.env.LOOKBACK_DAYS || 90) || 90;
+const trainIntervalDays = Number(process.env.TRAIN_INTERVAL_DAYS || 14) || 14;
 
 if (!token || !repository) {
   console.error('GITHUB_TOKEN and GITHUB_REPOSITORY are required.');
@@ -187,6 +189,53 @@ const recoveries = failureEvents
   .filter((h) => h !== null && h >= 0);
 const mttrHours = median(recoveries);
 
+// Release-train on-time delivery signal (ADR 0009). The train calendar is
+// anchored to the earliest release inside the window (we cannot know cadence
+// before the first recorded release) and stepped by TRAIN_INTERVAL_DAYS. A
+// train is "delivered" when at least one release published inside its
+// [departure, departure + interval) window; planned trains that shipped
+// nothing lower the on-time rate. The signal is derived purely from native
+// release timestamps vs the calendar — it is a cadence-adherence measure, not
+// a prediction, and never invents intent.
+const windowReleases = releases
+  .filter((r) => inWindow(r.published_at))
+  .sort((a, b) => new Date(a.published_at) - new Date(b.published_at));
+const intervalMs = trainIntervalDays * 24 * 60 * 60 * 1000;
+const anchorIso = windowReleases.length > 0 ? windowReleases[0].published_at : null;
+const anchorMs = anchorIso ? new Date(anchorIso).getTime() : windowStart.getTime();
+
+const deliveredTrains = new Set(
+  windowReleases.map((r) => Math.floor((new Date(r.published_at) - anchorMs) / intervalMs)),
+);
+
+const plannedTrains = [];
+for (let d = anchorMs; d <= now.getTime(); d += intervalMs) {
+  plannedTrains.push(d);
+}
+
+const releaseTrains = plannedTrains.map((depMs, index) => ({
+  train: index + 1,
+  planned_departure: isoDate(new Date(depMs).toISOString()),
+  delivered: deliveredTrains.has(index),
+}));
+const missedTrains = releaseTrains.filter((t) => !t.delivered).map((t) => t.train);
+
+const releaseTrainOnTime =
+  windowReleases.length === 0
+    ? fail('no releases in window to compare against the train calendar')
+    : {
+        status: 'computed',
+        interval_days: trainIntervalDays,
+        anchor_date: anchorIso,
+        planned_trains: releaseTrains.length,
+        trains_delivered: releaseTrains.filter((t) => t.delivered).length,
+        on_time_rate:
+          releaseTrains.length === 0
+            ? 0
+            : releaseTrains.filter((t) => t.delivered).length / releaseTrains.length,
+        missed_train_numbers: missedTrains,
+      };
+
 const metrics = {
   generated_at: now.toISOString(),
   window: { days: lookbackDays, start: windowStart.toISOString(), end: now.toISOString() },
@@ -206,7 +255,10 @@ const metrics = {
     mttrHours !== null
       ? { status: 'computed', hours: mttrHours, events_sampled: recoveries.length }
       : fail('no failure events in window'),
+  release_train_on_time: releaseTrainOnTime,
 };
+
+audit.release_trains = releaseTrains;
 
 // ---- Reports ----------------------------------------------------------------
 
@@ -240,6 +292,13 @@ const mttrLine =
     ? `  - **median**: ${hoursToParts(mttr.hours)} (sampled ${mttr.events_sampled} event${mttr.events_sampled === 1 ? '' : 's'})`
     : `  - _${mttr.note}._`;
 
+const rt = metrics.release_train_on_time;
+const rtLine =
+  rt.status === 'computed'
+    ? `  - **on-time rate**: ${(rt.on_time_rate * 100).toFixed(1)}% (${rt.trains_delivered} of ${rt.planned_trains} planned train${rt.planned_trains === 1 ? '' : 's'} shipped; ${trainIntervalDays}-day interval anchored ${rt.anchor_date})` +
+      (rt.missed_train_numbers.length > 0 ? `; missed: #${rt.missed_train_numbers.join(', #')}` : '')
+    : `  - _${rt.note}._`;
+
 const report = [
   '## Delivery Telemetry & Audit Trail',
   '',
@@ -256,6 +315,9 @@ const report = [
   '',
   '### Time to recovery (proxy)',
   mttrLine,
+  '',
+  '### Release train on-time delivery',
+  rtLine,
   '',
   '### Counts in window',
   `  - **Deployments**: ${metrics.counts.deployments}`,
@@ -280,3 +342,4 @@ console.log(`deployment_counts=${envSummary}`);
 console.log(`deployments_total=${audit.deployments.length}`);
 console.log(`merged_pulls=${audit.merged_pulls.length}`);
 console.log(`failure_events=${failureEvents.length}`);
+console.log(`release_train_on_time=${rtLine.trim()}`);
