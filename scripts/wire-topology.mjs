@@ -58,11 +58,9 @@ function record(name, pass, detail = "") {
   RESULTS.push({ name, pass: Boolean(pass), detail });
   console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? `  — ${detail}` : ""}`);
 }
-const usersId = () => Number(shell(["api", "user", "--jq", ".id"]));
 
 // ---------- target state (kit §2; ADR 0011) ----------
 const GATE = "PDM Quality Gate (Status Check)";
-const REVIEWERS = [{ type: "User", id: usersId() }];
 const ENVS_WITH_REVIEWER = ["staging", "production"];
 const ARTIFACT_IGNORE_DID = "github-pages";
 
@@ -145,8 +143,14 @@ try {
       lock_branch: false,
     });
     console.log("::notice:: main protection converged");
+    // Required reviewers resolve to the repo OWNER (the operator of a scratch
+    // consumer); a runner's token cannot resolve `gh api user`, but the owner id
+    // is readable from the repo itself.
+    const reviewers = [
+      { type: "User", id: Number(shell(["api", `repos/${repoFull}`, "--jq", ".owner.id"])) },
+    ];
     for (const env of ["development", "staging", "production"]) {
-      apiRaw("PUT", `environments/${env}`, ENVS_WITH_REVIEWER.includes(env) ? { reviewers: REVIEWERS } : {});
+      apiRaw("PUT", `environments/${env}`, ENVS_WITH_REVIEWER.includes(env) ? { reviewers } : {});
     }
     apiRaw("PUT", `environments/${ARTIFACT_IGNORE_DID}`, {
       deployment_branch_policy: { protected_branches: false, custom_branch_policies: true },
