@@ -1,6 +1,6 @@
 # Learning PDM: Delivery Engine — Parallelization Plan for Phases 9–10
 
-Status: approved (2026-08-18) — plan of record for executing Phases 9 and 10 concurrently. Phase 8 (shared prereq) is complete; this converts the chapter from serial (`Phase 8 → Phase 9 → Phase 10`) into **Phase 8 (done) → P9 ∥ P10 → Phase 11 joint landing**. Tracked as GitHub issues `[P9] T9.*`–`[P10] T10.*` (already open, #55–#62) plus `[P11] T11.*` (created under this plan).
+Status: **executed and closed (2026-08-18)** — Phase 8 (shared prereq) complete; Phases 9 & 10 ran concurrently as **Track A (P9) ∥ Track B (P10)**, then **Phase 11 joint landing** delivered: both tracks merged to `develop` (PRs #101–#104), dependencies synced (#107), `main` parity restored via protected promotion (PR #108 → `03ee5dfa`, real deployments on dev/staging/prod), combined truthing readout (run 32087567616) recorded in ROADMAP (PR #109), and the 8 planning issues closed. Tracked as GitHub issues `[P9] T9.*`–`[P10] T10.*` (#55–#62) plus `[P11] T11.*`.
 
 ## 1. Purpose
 
@@ -110,10 +110,10 @@ Phase 8 — Maiden Voyage (SHARED PREREQ) — COMPLETE
 
 **Goal:** turn two parallel merges into one coherent delivered chapter.
 
-- **P11-T1** — Cross-track reconcile: both tracks merged to `develop`; `make sync`/`make lint` clean; `make sync-deps` + `make sync` adopted after any dependabot merges during the window; doc set reconciled (ROADMAP §13 status, architecture map, runbook, ADR log including ADR 0009). *Gates:* `quality-gate` on the reconcile PRs. *Touchpoints:* `docs/`, `.github/pdm/workflows/`.
-- **P11-T2** — Restore `main` parity: protected `develop`→`main` promotion (tests the combined surface through the three gates again); confirm a real `release-pipeline` run (push to `main`) records deployments. *Gates:* all three PR gates + `release-pipeline`. *Touchpoints:* PR flow.
-- **P11-T3** — Combined telemetry truthing: `workflow_dispatch` on `delivery-telemetry`; audit contains the P8 baseline, the joint release(s), and P10-T2's labeled failure + recovery; DF/LT/CFR/MTTR all real-and-explained; readout documented in the ROADMAP. *Gate:* `delivery-telemetry`. *Touchpoints:* `docs/ROADMAP.md`, `docs/local-runbook.md`.
-- **P11-T4** — Chapter close-out: mark Phases 9–11 complete in `docs/plans/roadmap-phase-8-10-maiden-voyage.md` (or a successor doc), close the 8 `[P9]`/`[P10]` planning issues, update the ROADMAP. *Touchpoints:* `docs/plans/`, `docs/ROADMAP.md`.
+- **P11-T1** *(done)* — Cross-track reconcile: both tracks merged to `develop`; `make sync`/`make lint` clean; dependabot bumps #92/#93 adopted via `make sync-deps` + `make sync` (PR #107); doc set reconciled (ROADMAP §13 status, ADR 0009 indexed).
+- **P11-T2** *(done)* — Restore `main` parity: protected `develop`→`main` promotion PR #108 — native quality-gate ran the full combined surface (install/lint/typecheck/test/build all green), merged as `03ee5dfa`; `release-pipeline` on the push recorded real Deployment API records for the promoted commit (dev 5954211736, staging 5954246814, prod 5954249612).
+- **P11-T3** *(done)* — Combined telemetry truthing: `workflow_dispatch` run 32087567616 (90d) — DF dev 1.48/wk, staging 0.93/wk, prod 0.93/wk, pages 0.78/wk; LT median 6m; CFR 1.9% (1/53); MTTR proxy median 21m; train on-time 100% (1/1); readout documented in ROADMAP (§13, PR #109).
+- **P11-T4** *(done)* — Chapter close-out: `docs/plans/phases-9-10-parallelization.md` + `roadmap-phase-8-10-maiden-voyage.md` marked complete, planning issues closed, ROADMAP updated.
 
 ## 6. Acceptance Criteria (per phase)
 
