@@ -1,0 +1,70 @@
+name: PDM Copy-Kit Smoke (Rehearsal)
+
+# P17 in-repo "consumer-path" rehearsal — a documented SUBSTITUTION for running
+# the copy-kit against a real second repo (docs/evidence/p17-consumer-repo-flight.md
+# records why). Executes the kit's §1 copy commands literally into a scratch
+# consumer on a fresh runner, brings the stand-in app (§3), then runs the engine's
+# offline checks INSIDE that rehearsed consumer and verifies the kit §8
+# expectations matrix (scripts/consumer-smoke.mjs). Dispatch-only; uploads the
+# report as a run artifact (never committed).
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: copykit-smoke
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-path-rehearsal:
+    name: Consumer-path rehearsal (kit §1→§8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install actionlint
+        shell: bash
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- 1.7.12
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.21.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Rehearse the consumer path (copy per kit §1, gates in-workspace)
+        id: rehearsal
+        shell: bash
+        run: |
+          CONSUMER="$RUNNER_TEMP/pdm-consumer"
+          echo "consumer=$CONSUMER" >> "$GITHUB_OUTPUT"
+          node scripts/consumer-smoke.mjs --root "$GITHUB_WORKSPACE" --consumer "$CONSUMER"
+
+      - name: Check kit §2 topology expectations against the live repo
+        shell: bash
+        run: make topology-check
+
+      - name: Persist rehearsal report for artifact upload
+        shell: bash
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/.github/pdm/reports"
+          cp "${{ steps.rehearsal.outputs.consumer }}/consumer-smoke-report.md" \
+             "$GITHUB_WORKSPACE/.github/pdm/reports/copykit-smoke-report.md"
+          echo "Report persisted to .github/pdm/reports/copykit-smoke-report.md"
+
+      - name: Upload rehearsal report
+        if: github.event.pull_request == null
+        uses: actions/upload-artifact@v7
+        with:
+          name: copykit-smoke-report
+          path: .github/pdm/reports/copykit-smoke-report.md
+          retention-days: 7
