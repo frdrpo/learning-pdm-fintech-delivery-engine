@@ -49,7 +49,7 @@ make test-frontend   # pnpm install --frozen-lockfile + lint + typecheck + test 
 cd frontend && pnpm test:watch   # fast local TDD loop
 ```
 
-`make test-frontend` needs pnpm on PATH (`brew install pnpm`; on Node <25 corepack also works). CI sets up pnpm with `pnpm/action-setup@v4` (pinned to the lockfile's version) before `actions/setup-node`, whose `cache: pnpm` requires pnpm to already be installed.
+`make test-frontend` needs pnpm on PATH (`brew install pnpm`; on Node <25 corepack also works). CI sets up pnpm with `pnpm/action-setup@v6` (pinned to the lockfile's `packageManager` field) before `actions/setup-node`, whose `cache: pnpm` requires pnpm to already be installed.
 
 ## `make test-gh` — the PR verification loop
 
@@ -94,6 +94,7 @@ Scheduled and tag workflows:
 - `delivery-telemetry` runs weekly (Mon 02:30 UTC) and on demand via `workflow_dispatch`. It reads GitHub's native delivery records (deployments, releases, merged PRs, rollback/incident issues) and uploads the audit trail + DORA-style telemetry as a `delivery-telemetry` artifact — including the release-train on-time signal (`release_train_on_time`, ADR 0009) derived from release timestamps against the train calendar (see ADR 0008).
 - `release-train-simulator` runs on demand via `workflow_dispatch`. It runs the deterministic release-train model headlessly and uploads a `release-train-simulation` artifact (JSON + markdown). It creates no deployments, releases, PRs, or issues — simulated outputs are labeled artifacts only (ADR 0010), so telemetry is unaffected.
 - `publish-pages` publishes the static-exported frontend to GitHub Pages on every push to `develop` (the `github-pages` environment branch policy) plus `workflow_dispatch`. The Pages site is the live target for `release-pipeline`'s post-deploy verify step via the `DEPLOY_VERIFY_URL` repo variable.
+- `copykit-smoke` runs on demand via `workflow_dispatch`. It is P17's documented in-repo substitution for a second-repo adoption proof: it replays the engine copy-kit (`docs/engine-copy-kit.md` §1→§8) into a throwaway consumer workspace on a fresh runner, runs `make lint` + `make test-frontend` inside that workspace, checks kit §8's expectations matrix, and runs `make topology-check` against the live repo. Uploads a `copykit-smoke-report` artifact; local equivalent: `make test-consumer-path`. It never writes to native delivery records.
 
 ```sh
 gh workflow run delivery-telemetry.yml --ref develop
@@ -116,7 +117,7 @@ The controlled drill that gives CFR/MTTR real data is fully documented in `docs/
 | Event | Results |
 |---|---|
 | PR run | PR comments (risk report, compliance pass/fail, gate summary) |
-| Non-PR run (`workflow_dispatch`, push, schedule) | Run artifacts: `risk-report`, `gate-report`, `security-rescan-report`, `delivery-telemetry`, `release-train-simulation`, `deploy-record-<env>`, `rollback-record`, `release-notes`, `build-info` — download from the run's "Artifacts" section |
+| Non-PR run (`workflow_dispatch`, push, schedule) | Run artifacts: `risk-report`, `gate-report`, `security-rescan-report`, `delivery-telemetry`, `release-train-simulation`, `copykit-smoke-report`, `deploy-record-<env>`, `rollback-record`, `release-notes`, `build-info` — download from the run's "Artifacts" section |
 | Dry-run release | `deploy-<env>.md` records written under `.github/pdm/deployments/` in the job workspace, uploaded as artifacts (never committed) |
 | Rollback (real mode) | Native Deployment API record for `rollback_to` (the recovery event MTTR reads), plus the `rollback-record` artifact |
 

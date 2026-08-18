@@ -32,6 +32,8 @@ The engine runs the two-branch model documented since Phase 8 (ADR 0011): `devel
 | `release-on-tag.yml` | push tags `v*`; `workflow_dispatch` with `version` (semver) | `cut-and-tag` (milestone gate, `develop` bump), `release` (build, release notes, GitHub Release) | `contents: write`, `issues: write` | GitHub Release + `release-notes` artifact; `release-cut-summary` artifact on dispatch |
 | `delivery-telemetry.yml` | weekly schedule (Mon 02:30 UTC); `workflow_dispatch` | `telemetry` (read GitHub API records → audit trail + DORA-style metrics) | `contents: read` | `delivery-telemetry` artifact (`delivery-audit-<ts>.json`, `delivery-telemetry-<ts>.json`/`.md`) |
 | `release-train-simulator.yml` | `workflow_dispatch` | `simulate` (run the deterministic release-train model headlessly) | `contents: read` | `release-train-simulation` artifact (`.json`/`.md`); creates no native delivery records (ADR 0010) |
+| `publish-pages.yml` | push to `develop`; `workflow_dispatch` | `build` (static export), `deploy` (GitHub Pages) | `contents: read`, `pages: write`, `id-token: write` | Pages site at `DEPLOY_VERIFY_URL` (the live post-deploy verify target); gated by the `github-pages` environment branch policy (ADR 0011) |
+| `copykit-smoke.yml` | `workflow_dispatch` | `consumer-path-rehearsal` (kit §1→§8 in a scratch consumer workspace; `make topology-check` on the live repo) | `contents: read` | `copykit-smoke-report` artifact; P17's documented in-repo substitution for a second-repo adoption proof (local equivalent: `make test-consumer-path`) |
 
 Adjacent configuration: `.github/dependabot.yml` keeps GitHub Actions and npm dependencies fresh (weekly, targeting `develop`).
 
