@@ -1,6 +1,6 @@
 # Learning PDM: Delivery Engine — Roadmap (Phases 11–13: Release Train Simulator)
 
-Status: planned (2026-08-17). Tracked as GitHub issues `[P11] T11.*`–`[P13] T13.*`.
+Status: **complete (2026-08-18)**. All three phases merged (PRs #69–#75 + close-out); tracked as GitHub issues `[P11] T11.*`–`[P13] T13.*`. See `docs/ROADMAP.md` §12 for the delivery readout.
 
 ## 1. Purpose
 
