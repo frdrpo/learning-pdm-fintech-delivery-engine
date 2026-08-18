@@ -84,7 +84,7 @@ jobs:
           EOF
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-info
           path: dist/build-info.json
@@ -180,7 +180,7 @@ jobs:
 
       - name: Upload development deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-development
           path: .github/pdm/deployments/deploy-development.md
@@ -252,7 +252,7 @@ jobs:
 
       - name: Upload staging deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-staging
           path: .github/pdm/deployments/deploy-staging.md
@@ -324,7 +324,7 @@ jobs:
 
       - name: Upload production deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-production
           path: .github/pdm/deployments/deploy-production.md
@@ -384,7 +384,7 @@ jobs:
             console.log(`Created rollback deployment ${resp.data.id} for ${envName} at ${process.env.ROLLBACK_TO}.`);
 
       - name: Upload rollback record
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rollback-record
           path: .github/pdm/deployments/rollback.md
