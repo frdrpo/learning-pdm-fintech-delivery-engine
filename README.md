@@ -18,6 +18,11 @@ All PDM workflow and deployment material is consolidated under a single folder, 
   - `quality-gate.yml` - Required status check: actionlint on workflows + toolchain-driven lint/test/build, aggregated into a single branch-protection gate.
   - `release-pipeline.yml` - Promotes builds through development/staging/production environments and records dry-run deployments.
   - `delivery-telemetry.yml` - Exports the GitHub-native delivery audit trail and DORA-style telemetry as run artifacts (weekly + on demand).
+  - `security-rescan.yml` - Weekly + on-demand gitleaks/OSV re-scan; uploads a report artifact and files an issue on blocking schedule findings.
+  - `release-on-tag.yml` - Milestone-gated releases: `workflow_dispatch` with a `version` (or a `v*` tag push) cuts the release off `develop` — requires a closed `v<version>` milestone, bumps `frontend/package.json`, and creates the GitHub Release in one self-contained run.
+  - `publish-pages.yml` - Publishes the static-exported frontend to GitHub Pages on every push to `develop` (the live `DEPLOY_VERIFY_URL` target).
+  - `release-train-simulator.yml` - Runs the deterministic release-train model headlessly (`workflow_dispatch` only); labeled artifacts, never native records (ADR 0010).
+  - `copykit-smoke.yml` - P17 copy-kit rehearsal: replays the engine copy-kit (§1→§8) in a throwaway consumer workspace on a fresh runner (`workflow_dispatch` only; local equivalent `make test-consumer-path`).
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.

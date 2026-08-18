@@ -16,7 +16,7 @@ The engine is the GitHub Actions setup under `.github/`. Application code (a Nex
 - `scripts/` — Node helpers used by workflows (`risk-review.mjs`, `delivery-telemetry.mjs`).
 - `frontend/` — the Next.js application the delivery gates exercise (pnpm-managed).
 - `docs/` — architecture, native runbook, agent guide, ROADMAP, and the ADR decision log.
-- `Makefile` — `sync`, `lint`, `test-frontend`, `test-gh` targets.
+- `Makefile` — `sync`, `lint`, `test-frontend`, `test-gh`, `test-consumer-path`, `topology-check`, `topology-apply` targets.
 
 ## GitHub native workflow testing (the main task in this repo)
 
@@ -39,7 +39,7 @@ Edit only `.github/pdm/workflows/` and re-sync. Open a PR to `main` and GitHub r
 - **Cross-job files don't persist on GitHub** (each job gets a fresh workspace). Each workflow that writes reports/records must upload them as run artifacts from the same job that wrote them; artifacts use `if: !github.event.pull_request` (or `real_deploy == 'false'`) guards.
 - **Workflows run on every PR synchronize** and each posts a comment — expect a comment per push on active PRs.
 - **`make sync` must be run before committing**: GitHub only executes workflows from `.github/workflows/`, and `make lint` fails on drift between the two trees.
-- **The frontend stack is pnpm, run in `frontend/`.** The quality gate sets up pnpm with `pnpm/action-setup@v4` (version pinned to the lockfile) *before* `actions/setup-node` (which needs `pnpm` present for its `cache: pnpm`). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
+- **The frontend stack is pnpm, run in `frontend/`.** The quality gate sets up pnpm with `pnpm/action-setup@v6` (version pinned to the lockfile's `packageManager` field) *before* `actions/setup-node` (which needs `pnpm` present for its `cache: pnpm`). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
 - **On Apple Silicon, nothing here needs a container**; `actionlint` runs natively via Homebrew.
 - **Trufflehog needs a base commit**: on non-PR runs use the empty-tree SHA `4b825dc642cb6eb9a060e54bf8d69288fbee4904` so the scan still covers the tree deterministically.
 - **Deployments default to dry-run**: `workflow_dispatch` on `release-pipeline` defaults `dry_run: true`; only a push to `main` or an explicit `dry_run: false` calls the Deployment API. `rollback_to` always records a dry-run rollback event.
