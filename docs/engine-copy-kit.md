@@ -51,7 +51,7 @@ make test-gh         # opens/updates a PR to main and watches the 3 gates native
 
 1. Open a PR `develop → main`, let the protected quality gate pass, merge — that is the promotion.
 2. Dispatch `release-pipeline` with `dry_run: false` to record real `createDeployment` records (approve staging/prod reviewers in the run UI).
-3. Push a `v*` tag → `release-on-tag` builds, drafts `release-summary.md` notes, creates the GitHub Release.
+3. Cut the release from `develop`: dispatch `release-on-tag` with `version` (e.g. `0.2.0`). It requires a closed milestone `v0.2.0` (a missing milestone is auto-created as open, blocking until closed), bumps `frontend/package.json` on `develop`, and creates the GitHub Release in one run. Manual `v*` pushes still publish but must pass the same milestone gate.
 4. Dispatch `delivery-telemetry` and confirm a real, explainable DORA readout. `insufficient-data` is honest, not broken.
 
 ## 7. What you own vs what the engine cares about

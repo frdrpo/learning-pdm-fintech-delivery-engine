@@ -1,26 +1,194 @@
 name: PDM Release on Tag
 
+# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Releases are gated on a closed GitHub milestone titled v<version> and are
+# self-contained: GITHUB_TOKEN-created tags/commits never spawn a new workflow
+# run, so the dispatch path does the whole release (bump + build + createRelease)
+# in one run instead of chaining on a tag push.
+#
+# Paths:
+#   - workflow_dispatch (version input): validates, gates on the milestone
+#     (auto-creates it as open if missing), bumps frontend/package.json on
+#     develop, then builds and creates the GitHub Release in the same run.
+#   - push of a v* tag: still gated on a closed milestone before publishing
+#     (manual tag pushes cannot bypass the gate).
+
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semver to release (e.g. 1.2.0 or v1.2.0); requires a closed milestone titled v<version>
+        type: string
+        required: true
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.version || github.ref_name }}
   cancel-in-progress: false
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
+  cut-and-tag:
+    name: Cut release (bump develop + tag)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      tag: ${{ steps.validate.outputs.tag }}
+      sha: ${{ steps.bump.outputs.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Validate version
+        id: validate
+        shell: bash
+        run: |
+          raw="${{ inputs.version }}"
+          version="${raw#v}"
+          if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version '${raw}'; expected semver like 1.2.0."
+            exit 1
+          fi
+          if git ls-remote --exit-code origin "refs/tags/v${version}" >/dev/null 2>&1; then
+            echo "::error::Tag v${version} already exists on origin; refusing to re-cut it."
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Milestone gate (require closed milestone)
+        id: gate
+        env:
+          TAG_NAME: v${{ steps.validate.outputs.version }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const tag = process.env.TAG_NAME;
+            const milestone = (await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100,
+            })).data.find((m) => m.title === tag);
+            if (!milestone) {
+              const created = await github.rest.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: tag,
+                description: `Release window for ${tag}. Close this milestone to allow the release.`,
+              });
+              console.log(`Created milestone ${created.data.number} for ${tag} (open).`);
+              core.setFailed(`Milestone ${tag} did not exist; created it open. Close it, then re-dispatch.`);
+              return;
+            }
+            if (milestone.state !== 'closed') {
+              core.setFailed(`Milestone ${tag} is still open — close it before releasing.`);
+              return;
+            }
+            console.log(`Milestone ${tag} (#${milestone.number}) is closed — release allowed.`);
+            core.setOutput('milestone', String(milestone.number));
+
+      - name: Sync develop
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin develop
+          git checkout -B cut-release-and-tag origin/develop
+
+      - name: Bump frontend version
+        id: bump
+        shell: bash
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = "frontend/package.json";
+            const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
+            pkg.version = process.argv[1];
+            fs.writeFileSync(p, JSON.stringify(pkg, null, 2) + "\n");
+          ' "${{ steps.validate.outputs.version }}"
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "Version already at ${{ steps.validate.outputs.version }}; nothing to commit."
+          else
+            git add frontend/package.json
+            git commit -m "chore: release v${{ steps.validate.outputs.version }}"
+            git push origin HEAD:develop
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Write cut summary
+        shell: bash
+        env:
+          MILESTONE: ${{ steps.gate.outputs.milestone }}
+        run: |
+          mkdir -p .github/pdm/releases
+          cat <<EOF > .github/pdm/releases/release-cut-summary.md
+          # Release cut
+          - version: ${{ steps.validate.outputs.version }}
+          - tag: ${{ steps.validate.outputs.tag }}
+          - milestone: ${MILESTONE:-n/a}
+          - commit: ${{ steps.bump.outputs.sha }}
+          - mode: self-contained run (no event chaining)
+          EOF
+
+      - name: Upload cut summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-cut-summary
+          path: .github/pdm/releases/release-cut-summary.md
+          retention-days: 7
+
   release:
     name: Build & publish release
+    needs: cut-and-tag
+    if: github.event_name == 'push' || needs.cut-and-tag.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          fetch-tags: true
+          ref: ${{ needs.cut-and-tag.outputs.sha || github.sha }}
+
+      - name: Milestone gate (require closed milestone)
+        env:
+          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const tag = process.env.TAG_NAME;
+            const milestone = (await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100,
+            })).data.find((m) => m.title === tag);
+            if (!milestone) {
+              const created = await github.rest.issues.createMilestone({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: tag,
+                description: `Release window for ${tag}. Close this milestone to allow the release.`,
+              });
+              console.log(`Created milestone ${created.data.number} for ${tag} (open).`);
+              core.setFailed(`Milestone ${tag} did not exist; created it open. Close it, then re-run.`);
+              return;
+            }
+            if (milestone.state !== 'closed') {
+              core.setFailed(`Milestone ${tag} is still open — close it before releasing.`);
+              return;
+            }
+            console.log(`Milestone ${tag} (#${milestone.number}) is closed — release allowed.`);
 
       - name: Detect application stack
         id: stack
@@ -34,7 +202,7 @@ jobs:
 
       - name: Set up pnpm
         if: steps.stack.outputs.found == 'true' && hashFiles('frontend/pnpm-lock.yaml') != ''
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 11.21.0
 
@@ -47,12 +215,14 @@ jobs:
 
       - name: Assemble release info
         shell: bash
+        env:
+          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
         run: |
           mkdir -p dist .github/pdm/releases
           {
             echo "{"
-            echo "  \"tag\": \"${{ github.ref_name }}\","
-            echo "  \"sha\": \"${{ github.sha }}\","
+            echo "  \"tag\": \"${TAG_NAME}\","
+            echo "  \"sha\": \"$(git rev-parse HEAD)\","
             echo "  \"built_at\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
             echo "  \"stack_found\": \"${{ steps.stack.outputs.found }}\""
             echo "}"
@@ -60,20 +230,22 @@ jobs:
 
       - name: Generate release notes
         shell: bash
+        env:
+          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
         run: |
           mkdir -p .github/pdm/releases
-          notes_file=".github/pdm/releases/release-notes-${GITHUB_REF_NAME}.md"
+          notes_file=".github/pdm/releases/release-notes-${TAG_NAME}.md"
           {
-            echo "# Release ${GITHUB_REF_NAME}"
+            echo "# Release ${TAG_NAME}"
             echo ""
-            echo "- **commit**: ${GITHUB_SHA}"
+            echo "- **commit**: $(git rev-parse HEAD)"
             echo "- **built**: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "- **stack**: ${{ steps.stack.outputs.found }}"
             echo ""
             echo "## Changes since the previous tag"
           } > "${notes_file}"
           previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
-          if [[ -n "${previous_tag}" && "${previous_tag}" != "${GITHUB_REF_NAME}" ]]; then
+          if [[ -n "${previous_tag}" && "${previous_tag}" != "${TAG_NAME}" ]]; then
             git log --oneline --no-merges "${previous_tag}..HEAD" >> "${notes_file}"
           else
             {
@@ -86,7 +258,7 @@ jobs:
           # metric: it is review/edit guidance for the release notes body.
           {
             echo ""
-            if [[ -n "${previous_tag}" && "${previous_tag}" != "${GITHUB_REF_NAME}" ]]; then
+            if [[ -n "${previous_tag}" && "${previous_tag}" != "${TAG_NAME}" ]]; then
               node scripts/release-summary.mjs "${previous_tag}" HEAD
             else
               node scripts/release-summary.mjs HEAD
@@ -95,16 +267,20 @@ jobs:
           echo "Wrote ${notes_file}"
 
       - name: Create GitHub Release
+        env:
+          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
+          COMMIT_SHA: ${{ needs.cut-and-tag.outputs.sha || github.sha }}
         uses: actions/github-script@v9
         with:
           script: |
-            const tag = context.ref.replace('refs/tags/', '');
+            const tag = process.env.TAG_NAME;
             const fs = require('fs');
             const notes = fs.readFileSync(`.github/pdm/releases/release-notes-${tag}.md`, 'utf8');
             const resp = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
+              target_commitish: process.env.COMMIT_SHA,
               name: `Release ${tag}`,
               body: notes,
               draft: false,
@@ -115,5 +291,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-notes
-          path: .github/pdm/releases/release-notes-${{ github.ref_name }}.md
+          path: .github/pdm/releases/release-notes-${{ needs.cut-and-tag.outputs.tag || github.ref_name }}.md
           retention-days: 7

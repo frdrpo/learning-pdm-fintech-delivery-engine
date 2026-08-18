@@ -23,6 +23,64 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
 - `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests. This is the application the delivery gates exercise.
 
+## System Flow
+
+A high-level view of how the engine flows from local edits through the PR gates, the release pipeline, and telemetry. For the detailed workflow map (triggers, jobs, permissions, artifacts), see `docs/architecture.md`.
+
+```mermaid
+flowchart LR
+    subgraph Local["Local workspace"]
+        A["Edit .github/pdm/workflows/*.yml (canonical)"] --> B["make sync"]
+        B --> C["make lint (actionlint + drift check)"]
+        C --> D["Push branch"]
+    end
+
+    D --> P["Open PR to main"]
+
+    subgraph Gates["PR gates (every PR to main)"]
+        RH["risk-health-check — gitleaks + OSV + code health + AI risk review"]
+        CG["compliance-guardrail — trufflehog base..head"]
+        QG["quality-gate (REQUIRED) — actionlint + lint/typecheck/test/build"]
+    end
+
+    P --> RH
+    P --> CG
+    P --> QG
+
+    RH --> RH1["PR comment / risk-report artifact"]
+    CG --> CG1["PR comment (pass/fail)"]
+    QG --> QG1["PR comment / gate-report artifact"]
+
+    RH --> M["Merge to main (only when all gates pass)"]
+    CG --> M
+    QG --> M
+
+    M --> RP["release-pipeline — build → development → staging → production"]
+    RP -->|dry_run: true| RP1["Deploy-record artifacts (dry-run)"]
+    RP -->|dry_run: false / push| RP2["GitHub Deployment API (real deployments)"]
+
+    M -.->|push to develop| PP["publish-pages → GitHub Pages (live verify target)"]
+    M -.->|dispatch v* (milestone-gated)| RT["release-on-tag → GitHub Release"]
+
+    subgraph Scheduled["Scheduled + on demand"]
+        SR["security-rescan — weekly Mon 02:00 UTC"]
+        DT["delivery-telemetry — weekly Mon 02:30 UTC"]
+        TS["release-train-simulator — workflow_dispatch only"]
+    end
+
+    SR --> SR1["security-rescan-report artifact"]
+    DT --> DT1["delivery-audit + delivery-telemetry artifacts"]
+    TS --> TS1["release-train-simulation artifact (no native records)"]
+```
+
+Notes on the flow:
+
+- `quality-gate` is the single required branch-protection check on `main` — a PR merges only when all three PR workflows pass.
+- On PR runs, workflows post comments to the PR; on non-PR (`workflow_dispatch`) runs they upload reports and dry-run deployment records as run artifacts instead.
+- The canonical source of truth is `.github/pdm/workflows/`; `.github/workflows/` holds byte-identical execution copies kept in sync via `make sync`.
+- A `push` to `main` always runs the release pipeline for real (`dry_run: false`); `workflow_dispatch` defaults to `dry_run: true`. Staging and production require manual approval.
+- Releases are cut from `develop` via `release-on-tag` `workflow_dispatch` (version input): gated on a closed milestone `v<version>`, bumps `frontend/package.json` on `develop`, and creates the GitHub Release in the same run (`GITHUB_TOKEN`-triggered events never spawn a new run, so no tag-push chaining). Manual `v*` tag pushes still publish but pass the same milestone gate.
+
 ## Prerequisites
 
 - [actionlint](https://github.com/rhysd/actionlint) installed (`brew install actionlint`) for `make lint`.
