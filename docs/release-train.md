@@ -43,3 +43,5 @@ Example readout:
 Cutoff for train 2 is **2026-08-28**.
 
 > **Note on v0.2.0 (2026-08-18):** `v0.2.0` published 2026-08-18T02:39:39Z — inside **train 1's** window `[08-17, 08-31)`. It therefore counts toward train 1 (already delivered), and does **not** prematurely mark train 2 as shipped. Train 2 is delivered only when a release publishes in its own window `[08-31, 09-14)`. The telemetry on-time signal reports this honestly (`insufficient-data`/pending until then) rather than inflating the rate.
+
+> **Note on v0.3.0 (2026-08-18, early slip release):** `v0.3.0` published 2026-08-18T08:11:32Z — **inside train 1's window** `[08-17, 08-31)`, 13 days before train 2's departure, per owner-directed slip decisions (issues #124/#125). It therefore **does not** count as delivering train 2: the on-time signal stays 1/1 with train 2 pending until a release publishes inside `[08-31, 09-14)`. Reported as it actually occurred — never inflated.
