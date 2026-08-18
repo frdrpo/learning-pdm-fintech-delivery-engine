@@ -101,9 +101,17 @@ The fallback is implemented as:
   stand-in app (§3), then runs `make lint` + `make test-frontend` *inside that
   workspace* and checks the kit §8 expectations matrix byte-for-byte
   (`scripts/consumer-smoke.mjs`), uploading the report as an artifact.
+  **Verified natively 2026-08-18: run 32108960363 — 15/15 checks PASS, report
+  artifact `copykit-smoke-report.md` downloaded.** (The workflow needed four
+  hardening iterations against runner reality: consumer-dir creation,
+  actionlint PATH, `GITHUB_REPOSITORY`/owner-id resolution, and `GH_TOKEN` +
+  runner-token-aware admin-gated reads — every one a kit §8 line.)
 - **`make adopt-topology`** (`scripts/wire-topology.mjs`): idempotent
   `--check`/`--apply` for kit §2, so a real consumer's topology cost is one
-  command instead of six hand-typed API calls.
+  command instead of six hand-typed API calls. Runner tokens can't read
+  admin-gated state (branch protection, env rules) — the CI smoke SKIPs those
+  with an explicit "operator check required" note; the operator-side check
+  with an admin token asserts the full target state.
 
 This satisfies P17-T3 (read-back: the kit's copy command sequence is executed
 and verified byte-correct in the rehearsed consumer) and P17-T2 (folding every
