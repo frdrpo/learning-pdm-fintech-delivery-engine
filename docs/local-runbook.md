@@ -15,6 +15,19 @@ make lint   # actionlint on canonical + execution copies, then drift check
 
 Commit both trees together. `make lint` exits non-zero on drift.
 
+### Branch topology maintenance (ADR 0011)
+
+The engine documents a two-branch model: `develop` (integration + **default** branch) and `main` (protected production). Multiple mechanisms depend on it: `release-on-tag` syncs from and bumps `develop`, `publish-pages` triggers on pushes to `develop` (its `github-pages` environment branch policy allow-lists `develop`), and dependabot targets `develop`. If `develop` ever disappears (e.g. 2026-08-18 pre-P15 drift), the next release cut fails at "Sync develop", Pages stops auto-publishing, and dependabot targets a nonexistent branch. Restore it at `main` parity and re-default:
+
+```sh
+git push origin main:develop                # re-create develop at main parity
+gh api -X PATCH repos/{owner}/{repo} -f default_branch=develop
+# verify: gh api repos/{owner}/{repo}/branches --jq '.[].name'
+# verify: gh api repos/{owner}/{repo} --jq .default_branch
+```
+
+The `github-pages` environment's branch policy stays `develop`, so a push to `develop` (or a `workflow_dispatch` re-check from the default branch) re-publishes Pages.
+
 ### After a Dependabot merge
 
 Dependabot only scans `.github/workflows/` (the standard GitHub Actions location), so its version bumps land in the execution copies and **not** in `.github/pdm/workflows/`. After each dependabot merge, adopt the bumps into the canonical tree and re-mirror:
