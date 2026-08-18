@@ -60,7 +60,7 @@ flowchart LR
     RP -->|dry_run: false / push| RP2["GitHub Deployment API (real deployments)"]
 
     M -.->|push to develop| PP["publish-pages → GitHub Pages (live verify target)"]
-    M -.->|tag v*| RT["release-on-tag → GitHub Release"]
+    M -.->|dispatch v* (milestone-gated)| RT["release-on-tag → GitHub Release"]
 
     subgraph Scheduled["Scheduled + on demand"]
         SR["security-rescan — weekly Mon 02:00 UTC"]
@@ -79,6 +79,7 @@ Notes on the flow:
 - On PR runs, workflows post comments to the PR; on non-PR (`workflow_dispatch`) runs they upload reports and dry-run deployment records as run artifacts instead.
 - The canonical source of truth is `.github/pdm/workflows/`; `.github/workflows/` holds byte-identical execution copies kept in sync via `make sync`.
 - A `push` to `main` always runs the release pipeline for real (`dry_run: false`); `workflow_dispatch` defaults to `dry_run: true`. Staging and production require manual approval.
+- Releases are cut from `develop` via `release-on-tag` `workflow_dispatch` (version input): gated on a closed milestone `v<version>`, bumps `frontend/package.json` on `develop`, and creates the GitHub Release in the same run (`GITHUB_TOKEN`-triggered events never spawn a new run, so no tag-push chaining). Manual `v*` tag pushes still publish but pass the same milestone gate.
 
 ## Prerequisites
 
