@@ -84,7 +84,7 @@ jobs:
           EOF
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build-info
           path: dist/build-info.json
@@ -140,6 +140,8 @@ jobs:
 
       - name: Verify development deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying development at ${DEPLOY_VERIFY_URL}"
@@ -178,7 +180,7 @@ jobs:
 
       - name: Upload development deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-development
           path: .github/pdm/deployments/deploy-development.md
@@ -210,6 +212,8 @@ jobs:
 
       - name: Verify staging deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying staging at ${DEPLOY_VERIFY_URL}"
@@ -248,7 +252,7 @@ jobs:
 
       - name: Upload staging deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-staging
           path: .github/pdm/deployments/deploy-staging.md
@@ -280,6 +284,8 @@ jobs:
 
       - name: Verify production deployment
         shell: bash
+        env:
+          DEPLOY_VERIFY_URL: ${{ vars.DEPLOY_VERIFY_URL || '' }}
         run: |
           if [[ -n "${DEPLOY_VERIFY_URL:-}" ]]; then
             echo "::notice::Verifying production at ${DEPLOY_VERIFY_URL}"
@@ -318,7 +324,7 @@ jobs:
 
       - name: Upload production deployment record
         if: needs.build.outputs.real_deploy == 'false'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-record-production
           path: .github/pdm/deployments/deploy-production.md
@@ -351,8 +357,34 @@ jobs:
           EOF
           echo "Recorded rollback to ${ROLLBACK_TO}"
 
+      - name: Record real rollback deployment
+        if: needs.build.outputs.real_deploy == 'true'
+        env:
+          TARGET_ENV: ${{ inputs.environment || 'all' }}
+          ROLLBACK_TO: ${{ inputs.rollback_to }}
+        uses: actions/github-script@v9
+        with:
+          # A real-mode rollback is a first-class delivery event: it creates a
+          # Deployment API record for the rollback target so the recovery shows
+          # up in the native audit trail (delivery telemetry's MTTR proxy reads
+          # "failure event -> next deployment"). The controlled T10.2 drill
+          # files its one labeled incident between the broken deploy and this
+          # recovery record.
+          script: |
+            const envName = process.env.TARGET_ENV;
+            const resp = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: process.env.ROLLBACK_TO,
+              environment: envName,
+              auto_merge: false,
+              required_contexts: [],
+              description: 'rollback recovery deployment',
+            });
+            console.log(`Created rollback deployment ${resp.data.id} for ${envName} at ${process.env.ROLLBACK_TO}.`);
+
       - name: Upload rollback record
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rollback-record
           path: .github/pdm/deployments/rollback.md

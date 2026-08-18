@@ -1,6 +1,6 @@
 # Learning PDM: Delivery Engine — Roadmap (Phases 8–10: "What's Next")
 
-Status: planned (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`.
+Status: in-flight (2026-08-17). Tracked as GitHub issues `[P8] T8.*`–`[P10] T10.*`. **Phase 8 complete** — P8-T1 (first real gated promotion `develop` → `main`) merged as PR #84 (merge commit `e94d9ef`); P8-T2 real promotion flight (run 32019424411: dev/staging/prod `createDeployment` on `30f6193`); P8-T3 release `v0.1.0` on `e94d9ef`; P8-T4 baseline DORA readout (run 32022529571, 90d: DF dev 0.62/wk, staging 0.47/wk, prod 0.47/wk; LT median 32m; CFR/MTTR `insufficient-data` until P10-T2); P8-T5 GitHub Pages live verify target live (200 on `/` and `/simulator/`) with `release-pipeline` verify executing against `DEPLOY_VERIFY_URL` on dev/staging/prod (run 32023618678).
 
 ## 1. Purpose
 
@@ -93,7 +93,7 @@ independent)            (needs P8 baseline: real deploys/release)
 **Goal:** cover the remaining README promises — "agile release trains" — and give CFR/MTTR real data, then leave a path for adopting this engine in a fresh product.
 
 - **P10-T1** — Release train cadence: document a train calendar (train interval, content, readiness cutoffs) and extend `delivery-telemetry.mjs` with an on-time delivery signal; record the decision as an ADR. *Gate:* `delivery-telemetry`. *Touchpoints:* `docs/decisions/0009-*.md`, `scripts/`, `.github/pdm/workflows/` (+ `make sync`).
-- **P10-T2** — Controlled failure & recovery drill: deploy a deliberately introduced regression to a lower environment, exercise `rollback_to`, and file one carefully-named issue (per `delivery-telemetry.mjs` title taxonomy) so **CFR and the MTTR proxy compute real values** from native records. *Gates:* `release-pipeline`, `delivery-telemetry`.
+- **P10-T2** — Controlled failure & recovery drill: deploy a deliberately introduced regression to a lower environment, exercise `rollback_to`, and file one carefully-*labeled* issue (an explicit `rollback`/`incident` label — `delivery-telemetry.mjs` counts failure events by label, never by title, since feature tasks mention rollback too) so **CFR and the MTTR proxy compute real values** from native records. *Gates:* `release-pipeline`, `delivery-telemetry`.
 - **P10-T3** — AI-assisted release notes / PR summaries: extend the release-note generation and risk-report with engine-drafted summaries, keeping the "never invent telemetry" ethos intact (draft ≠ metric). *Gates:* `risk-health-check`, `release-pipeline`.
 - **P10-T4** — Reusable engine template: document a copy-kit/bootstrapping path (checklist + scripts usage) so a new product team can adopt this engine without reading every ADR; README/runbook updates. *Touchpoints:* docs/, README.md.
 
@@ -115,7 +115,7 @@ independent)            (needs P8 baseline: real deploys/release)
 | The first real promotion surprises us (real `createDeployment` vs dry-run habits) | Keep `dry_run: true` as the dispatch default (ADR 0002); only P8-T2 explicitly sets `dry_run: false`; docs label that dispatch as the controlled flight |
 | Pages publish needs static export (`next build` emits `.next`, not a static site) | P8-T5 may require `output: 'export'` or equivalent in `frontend/`; verify the `github-pages` environment actually has a Pages site enabled before wiring `DEPLOY_VERIFY_URL` |
 | CFR/MTTR walk back to `insufficient-data` (no recorded failure) | P10-T2 deliberately creates one controlled failure on a lower env with a taxonomy-correct issue title, then a recovery deploy |
-| Failure-drill issue title pollutes change-failure metrics | Follow `scripts/delivery-telemetry.mjs` naming discipline exactly; review the issue title before filing (it intentionally counts) |
+| Failure-drill issue title pollutes change-failure metrics | Failure events are counted by a dedicated `rollback`/`incident` label, not title text — feature tasks mentioning rollback can't count; the drill's labeled issue (P10-T2) intentionally does |
 | Telemetry stays `insufficient-data` because events are sparse in a learning repo | Metrics are *real and explained*, never padded; ROADMAP documents why `insufficient-data` remains for any unexercised metric |
 | Docs drift as workflows change | Same-PR doc updates (architecture map, runbook, ADR log) per the repo's Definition of Done |
 

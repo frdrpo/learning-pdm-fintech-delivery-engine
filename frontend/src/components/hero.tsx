@@ -41,6 +41,12 @@ export function Hero() {
           >
             Try the simulator
           </a>
+          <a
+            href="/dashboard"
+            className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-white/30"
+          >
+            Open the dashboard
+          </a>
         </div>
       </div>
     </header>

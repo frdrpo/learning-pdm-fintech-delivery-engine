@@ -82,6 +82,16 @@ jobs:
               git log --oneline --no-merges -20
             } >> "${notes_file}"
           fi
+          # Append an AI-assisted draft summary (P10-T3). A draft, never a
+          # metric: it is review/edit guidance for the release notes body.
+          {
+            echo ""
+            if [[ -n "${previous_tag}" && "${previous_tag}" != "${GITHUB_REF_NAME}" ]]; then
+              node scripts/release-summary.mjs "${previous_tag}" HEAD
+            else
+              node scripts/release-summary.mjs HEAD
+            fi
+          } >> "${notes_file}"
           echo "Wrote ${notes_file}"
 
       - name: Create GitHub Release
@@ -102,8 +112,8 @@ jobs:
             console.log(`Created release ${resp.data.html_url}`);
 
       - name: Upload release notes artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-notes
-          path: .github/pdm/releases/release-notes-${GITHUB_REF_NAME}.md
+          path: .github/pdm/releases/release-notes-${{ github.ref_name }}.md
           retention-days: 7

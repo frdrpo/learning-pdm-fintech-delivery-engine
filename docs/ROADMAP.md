@@ -152,7 +152,7 @@ Full scope and issue mapping live in `docs/plans/release-train-simulator.md`.
 
 Each phase is a **branch off `develop` + PR**, following the existing repo flow. Phases 2–5 run as parallel tracks after Phase 1 merges green. Phase 5 can start immediately and absorb notes from other tracks.
 
-> **Status:** Phases 0–8 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch).
+> **Status:** Phases 0–8 complete. Track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main` plus `workflow_dispatch` runs (dispatchable from `develop`, the default branch). **Phase 8–10 chapter (maiden voyage)** in-flight — see `docs/plans/roadmap-phase-8-10-maiden-voyage.md`; Phase 8 (first real delivery flight: `develop`→`main` promotion, real dev/staging/prod deployments, release `v0.1.0`, baseline DORA telemetry, GitHub Pages live verify target) is complete. **Phase 9 (Product Surface)** is complete — delivery dashboard route + release-train readiness model landed (PRs #101–#103). **Phase 10 (Release Train, Failure Telemetry & Reusable Engine)** is in-flight: ADR 0009 train calendar + on-time signal, engine summary draft, and the engine copy-kit are merged (PR #103); the controlled failure & recovery drill (T10.2) executed **2026-08-18** — CFR computed at **2.3%** (1 failure / 44 deployments) and MTTR median **1m** (incident #105, recovery deploy record 5954064736), superseding the P8 baseline's `insufficient-data`.
 
 ## 14. Definition of Done (every phase)
 
