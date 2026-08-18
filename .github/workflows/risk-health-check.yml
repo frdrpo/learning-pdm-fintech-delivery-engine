@@ -238,7 +238,7 @@ jobs:
 
       - name: Upload risk report
         if: always() && github.event.pull_request.number == null
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: risk-report
           path: .github/pdm/reports/risk-report.md
