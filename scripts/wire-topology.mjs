@@ -29,10 +29,10 @@ function shell(args, { capture = true } = {}) {
     stdio: capture ? ["ignore", "pipe", "inherit"] : ["ignore", "inherit", "inherit"],
   }).trim();
 }
-const repoFull = arg("--repo") ?? (() => {
-  const url = shell(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]);
-  return url;
-})();
+const repoFull =
+  arg("--repo") ??
+  process.env.GITHUB_REPOSITORY ??
+  (() => shell(["repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"]))();
 
 function api(method, resource, body) {
   const endpoint = resource ? `repos/${repoFull}/${resource}` : `repos/${repoFull}`;
