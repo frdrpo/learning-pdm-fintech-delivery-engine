@@ -80,7 +80,8 @@ deploy-production    (approval via required_reviewers)
 - `environment` input selects the chain: `development` (dev only), `staging` (staging, then production), `production` (production only), `all` (full chain, default).
 - A push to `main` is always a real deployment (`real_deploy=true`, calls `createDeployment`). A `workflow_dispatch` run defaults to `dry_run: true`, which writes `deploy-<env>.md` records and uploads them as artifacts without touching the Deployment API.
 - Each environment job runs a post-deploy verify step: if `DEPLOY_VERIFY_URL` is set it curls the URL (failing the job on a non-200 response); otherwise verification is skipped.
-- `rollback_to` records a dry-run rollback event (`rollback.md`, uploaded as `rollback-record` artifact) — no API call, useful for planning and audit.
+- `rollback_to` writes a dry-run rollback event (`rollback.md`, uploaded as `rollback-record` artifact). When the run is real (`dry_run: false` / push), the rollback job additionally creates a Deployment API record for the `rollback_to` ref — the native recovery event that telemetry's MTTR proxy reads (see `docs/train-failure-drill.md`).
+- The controlled recovery drill (T10.2) uses this path on `development` only: deploy the `chore/phase10-failure-drill` SHA (contains `scripts/train-drill-marker.mjs`), file one `incident`-labeled issue, then recover with a real `rollback_to` dispatch; `delivery-telemetry` then computes real CFR and MTTR.
 
 ## Release on tag and security re-scan
 

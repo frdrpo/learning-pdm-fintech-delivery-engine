@@ -357,6 +357,32 @@ jobs:
           EOF
           echo "Recorded rollback to ${ROLLBACK_TO}"
 
+      - name: Record real rollback deployment
+        if: needs.build.outputs.real_deploy == 'true'
+        env:
+          TARGET_ENV: ${{ inputs.environment || 'all' }}
+          ROLLBACK_TO: ${{ inputs.rollback_to }}
+        uses: actions/github-script@v9
+        with:
+          # A real-mode rollback is a first-class delivery event: it creates a
+          # Deployment API record for the rollback target so the recovery shows
+          # up in the native audit trail (delivery telemetry's MTTR proxy reads
+          # "failure event -> next deployment"). The controlled T10.2 drill
+          # files its one labeled incident between the broken deploy and this
+          # recovery record.
+          script: |
+            const envName = process.env.TARGET_ENV;
+            const resp = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: process.env.ROLLBACK_TO,
+              environment: envName,
+              auto_merge: false,
+              required_contexts: [],
+              description: 'rollback recovery deployment',
+            });
+            console.log(`Created rollback deployment ${resp.data.id} for ${envName} at ${process.env.ROLLBACK_TO}.`);
+
       - name: Upload rollback record
         uses: actions/upload-artifact@v4
         with:
