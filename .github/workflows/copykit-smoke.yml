@@ -54,6 +54,8 @@ jobs:
 
       - name: Check kit §2 topology expectations against the live repo
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: make topology-check TOPOLOGY_REPO="$GITHUB_REPOSITORY"
 
       - name: Persist rehearsal report for artifact upload
