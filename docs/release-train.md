@@ -32,12 +32,14 @@ Example readout:
   - **on-time rate**: 100.0% (1 of 1 planned train shipped; 14-day interval anchored 2026-08-17T10:33:21Z)
 ```
 
-## Example calendar (first window after v0.1.0)
+## Example calendar
 
 | Train | Planned departure | Delivered |
 |---|---|---|
-| 1 | 2026-08-17 | ✅ (v0.1.0) |
-| 2 | 2026-08-31 | pending |
+| 1 | 2026-08-17 | ✅ (v0.1.0, v0.2.0) |
+| 2 | 2026-08-31 | pending (cutoff 2026-08-28) |
 | 3 | 2026-09-14 | pending |
 
 Cutoff for train 2 is **2026-08-28**.
+
+> **Note on v0.2.0 (2026-08-18):** `v0.2.0` published 2026-08-18T02:39:39Z — inside **train 1's** window `[08-17, 08-31)`. It therefore counts toward train 1 (already delivered), and does **not** prematurely mark train 2 as shipped. Train 2 is delivered only when a release publishes in its own window `[08-31, 09-14)`. The telemetry on-time signal reports this honestly (`insufficient-data`/pending until then) rather than inflating the rate.
