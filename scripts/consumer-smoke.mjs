@@ -11,7 +11,7 @@
 // Exit 0 when every expectation passes; non-zero with a FAIL matrix otherwise.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -36,8 +36,10 @@ function run(cmd, args, cwd, timeoutMs = 600_000) {
 }
 
 // ---- §1 copy (literal commands from docs/engine-copy-kit.md) ----
-// NOTE: do NOT pre-create <consumer>/.github — `cp -R SRC EXISTING_DIR` would
-// copy INTO it (`.github/.github`). An absent destination is created by cp.
+// NOTE: create only the consumer ROOT (not <consumer>/.github) — `cp -R SRC
+// EXISTING_DIR` would copy INTO it (`.github/.github`); an absent destination
+// is created by cp.
+mkdirSync(CONSUMER, { recursive: true });
 run("cp", ["-R", path.join(ROOT, ".github"), path.join(CONSUMER, ".github")], ROOT);
 run("cp", ["-R", path.join(ROOT, "Makefile"), path.join(ROOT, "scripts"), CONSUMER], ROOT);
 run("cp", ["-R", path.join(ROOT, "README.md"), path.join(ROOT, "AGENTS.md"), CONSUMER], ROOT);
