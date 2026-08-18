@@ -94,6 +94,10 @@ GITHUB_TOKEN="$(gh auth token)" GITHUB_REPOSITORY=frdrpo/learning-pdm-fintech-de
   LOOKBACK_DAYS=90 node scripts/delivery-telemetry.mjs /tmp/telemetry
 ```
 
+## Failure & recovery drill (T10.2)
+
+The controlled drill that gives CFR/MTTR real data is fully documented in `docs/train-failure-drill.md`. In short: dispatch `release-pipeline` at the drill branch (`dry_run=false, environment=development`) → file the **one** `incident`-labeled issue → recover with a real-mode `rollback_to` dispatch → run `delivery-telemetry` to read the computed CFR and MTTR. The rollback job records a real Deployment API event when `dry_run=false`, so the recovery is a native record.
+
 ## Where results land
 
 | Event | Results |
@@ -101,6 +105,7 @@ GITHUB_TOKEN="$(gh auth token)" GITHUB_REPOSITORY=frdrpo/learning-pdm-fintech-de
 | PR run | PR comments (risk report, compliance pass/fail, gate summary) |
 | Non-PR run (`workflow_dispatch`, push, schedule) | Run artifacts: `risk-report`, `gate-report`, `security-rescan-report`, `delivery-telemetry`, `release-train-simulation`, `deploy-record-<env>`, `rollback-record`, `release-notes`, `build-info` — download from the run's "Artifacts" section |
 | Dry-run release | `deploy-<env>.md` records written under `.github/pdm/deployments/` in the job workspace, uploaded as artifacts (never committed) |
+| Rollback (real mode) | Native Deployment API record for `rollback_to` (the recovery event MTTR reads), plus the `rollback-record` artifact |
 
 ## Troubleshooting
 
@@ -119,3 +124,4 @@ GITHUB_TOKEN="$(gh auth token)" GITHUB_REPOSITORY=frdrpo/learning-pdm-fintech-de
 | `delivery-telemetry` metrics report `insufficient-data` | Expected on fresh repos or pure dry-run activity — telemetry reads GitHub-native API records only (ADR 0008); real deployments / rollback or incident issues populate it. |
 | Simulator run "did nothing" to delivery metrics | Expected — the simulator creates labeled artifacts only (ADR 0010); it never writes to the native delivery records telemetry reads. |
 | One comment per push on an active PR | Expected — the PR workflows re-run on every `synchronize`. |
+| `delivery-telemetry` CFR/MTTR still `insufficient-data` after the drill | The drill issue must carry the `incident` (or `rollback`) **label** — telemetry counts failures by label, never title (see `docs/train-failure-drill.md`); MTTR also needs a deployment *after* the incident. |
