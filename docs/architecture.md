@@ -16,6 +16,10 @@ Edit only `.github/pdm/workflows/`, run `make sync`, then `make lint`, and commi
 
 Run artifacts (reports, deployment records, release notes) are written under `.github/pdm/{reports,deployments,releases}/` by workflows but are never committed — they are uploaded as run artifacts instead.
 
+## Branch topology
+
+The engine runs the two-branch model documented since Phase 8 (ADR 0011): `develop` is the **unprotected integration branch and the default branch** (release bumps and dependabot land here), `main` is the **protected production branch** (`PDM Quality Gate (Status Check)` required, `enforce_admins` on). Work merges to `develop`; a protected `develop` → `main` PR is the promotion that runs the PR gates natively. The PR-gate workflows trigger on PRs to `main` only, so `make test-gh` (push + PR to `main`) is the native gate loop. If `develop` is ever deleted, restore it at `main` parity and re-set it as the default branch (see `docs/local-runbook.md`).
+
 ## Workflow map
 
 | Workflow | Triggers | Jobs | Permissions | Outputs / artifacts |
@@ -90,7 +94,7 @@ deploy-production    (approval via required_reviewers)
 
 ## GitHub Pages publish (live verify target)
 
-`publish-pages.yml` publishes the static-exported frontend to GitHub Pages on every push to `develop` (the `github-pages` environment's branch policy) plus `workflow_dispatch`. The `github-pages` environment restricts deployment to `develop`; the publish build sets `NEXT_PUBLIC_BASE_PATH=/learning-pdm-fintech-delivery-engine` for the subpath, and the Pages site becomes the live target for `release-pipeline`'s post-deploy verify step via the repo variable `DEPLOY_VERIFY_URL`. The frontend build uses `output: 'export'` so `next build` emits a static site into `frontend/out`.
+`publish-pages.yml` publishes the static-exported frontend to GitHub Pages on every push to `develop` (the `github-pages` environment's branch policy; ADR 0011) plus `workflow_dispatch`. The `github-pages` environment restricts deployment to `develop` (verified live: `custom_branch_policies` with a `develop` branch policy); the publish build sets `NEXT_PUBLIC_BASE_PATH=/learning-pdm-fintech-delivery-engine` for the subpath, and the Pages site becomes the live target for `release-pipeline`'s post-deploy verify step via the repo variable `DEPLOY_VERIFY_URL`. The frontend build uses `output: 'export'` so `next build` emits a static site into `frontend/out`.
 
 ## Delivery telemetry & audit trail
 

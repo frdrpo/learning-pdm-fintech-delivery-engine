@@ -24,9 +24,15 @@ cp -R .github front-end-root-for-you/.github \
 
 ## 2. Wire the branch topology
 
+- **Two-branch model (ADR 0011):** `develop` is your **default** and integration branch (unprotected; release bumps and dependabot land here), `main` is the protected production branch. The engine's mechanisms depend on `develop` existing: `release-on-tag` syncs from / bumps `develop`, `publish-pages` triggers on pushes to `develop`, and dependabot targets `develop`.
 - Protect `main`: require `PDM Quality Gate (Status Check)` and pull-request reviews. `develop` is your integration branch — protected PRs into it too if you want.
 - Create environments `development` / `staging` / `production` and, for staging+production, add `required_reviewers` (any two of your approvers).
 - Decide the deployment target for each environment. For a static frontend, publish to GitHub Pages (`github-pages` environment) and set `DEPLOY_VERIFY_URL` so the post-deploy verify step curls a live URL instead of skipping.
+- **If `develop` is deleted later** (branch drift — it happened in this repo, 2026-08-18), restore it at `main` parity and re-set it as the default branch before the next release cut:
+  ```sh
+  git push origin main:develop
+  gh api -X PATCH repos/{owner}/{repo} -f default_branch=develop
+  ```
 
 ## 3. Point the app stack
 

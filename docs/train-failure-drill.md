@@ -8,7 +8,7 @@ P10-T2 files **one** carefully-labeled issue so `delivery-telemetry.mjs` compute
 |---|---|---|
 | Regression marker | `scripts/train-drill-marker.mjs` | The deliberately-introduced regression. Lives in `scripts/` (Track B's zone) so the drill never touches `frontend/` or the live verify target. With `DRILL_BREAK=1` it reports a degraded health signal and exits 1. |
 | Broken deploy target | branch `chore/phase10-failure-drill` | A pushable SHA that carries the marker — the ref you deploy first. It is **never** PR'd/merged to `develop`. |
-| Good deploy target | `develop` (or `main`) HEAD | The recovery/rollback target. |
+| Good deploy target | `develop` (or `main`) HEAD | The recovery/rollback target. `develop` is the default branch (ADR 0011) — if it has been deleted, restore it at `main` parity first (`git push origin main:develop`). |
 | Recovery record | `release-pipeline.yml` rollback job | In real mode the rollback job now creates a Deployment API record for `rollback_to` — the native "recovery deployment" that MTTR reads. |
 
 ## Label discipline (non-negotiable)
