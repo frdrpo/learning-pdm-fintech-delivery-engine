@@ -54,9 +54,25 @@ function apiRaw(method, resource, body) {
 }
 
 const RESULTS = [];
+let hadError = false;
 function record(name, pass, detail = "") {
   RESULTS.push({ name, pass: Boolean(pass), detail });
   console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? `  — ${detail}` : ""}`);
+}
+function recordSkip(name, reason) {
+  RESULTS.push({ name, pass: true, detail: `SKIP — ${reason}` });
+  console.log(`SKIP  ${name}  — ${reason}`);
+}
+// Admin-gated reads (branch protection, env protection rules, vars, Pages) are
+// unreadable to a runner GITHUB_TOKEN; a real consumer's operator runs this with
+// an admin token. Unreadable => verify locally, never a false failure here.
+function readOrSkip(name, fn, reason) {
+  try {
+    return fn();
+  } catch {
+    recordSkip(name, reason);
+    return undefined;
+  }
 }
 
 // ---------- target state (kit §2; ADR 0011) ----------
@@ -69,63 +85,83 @@ try {
   record("repo resolves", true, `${repoFull} (${repo.visibility})`);
   record("default branch is develop", repo.default_branch === "develop", `live: ${repo.default_branch}`);
 
-  // main protection
-  const protection = api("GET", "branches/main/protection");
-  const contexts = protection.required_status_checks?.contexts ?? [];
-  record(
-    "main requires PDM Quality Gate (Status Check)",
-    contexts.includes(GATE),
-    contexts.join(", ") || "none",
+  // main protection (admin-gated — SKIP on a runner token, real check operator-side)
+  const protection = readOrSkip(
+    "main protection (PDM Quality Gate, enforce_admins, lock/owner gotchas)",
+    () => api("GET", "branches/main/protection"),
+    "admin-gated; verify with an operator `make topology-check` (admin token)",
   );
-  record("main enforce_admins on", protection.enforce_admins?.enabled === true);
-  record(
-    "main not lock_branch (merge gotcha)",
-    protection.lock_branch?.enabled === false,
-    protection.lock_branch?.enabled === true ? "LOCKED — clears silently block all merges" : "",
-  );
-  record(
-    "main require_code_owner_reviews off (merge gotcha)",
-    protection.required_pull_request_reviews?.require_code_owner_reviews === false,
-  );
-
-  // environments
-  const envs = api("GET", "environments").environments.map((e) => e.name);
-  for (const env of ["development", "staging", "production", ARTIFACT_IGNORE_DID]) {
-    record(`environment ${env} exists`, envs.includes(env), envs.join(", "));
-  }
-  const envDetail = (env) => api("GET", `environments/${env}`);
-  for (const env of ENVS_WITH_REVIEWER) {
-    const d = envDetail(env);
-    const rules = (d.protection_rules ?? []).map((r) => r.type);
+  if (protection) {
+    const contexts = protection.required_status_checks?.contexts ?? [];
     record(
-      `environment ${env} has required_reviewers`,
-      rules.includes("required_reviewers") || APPLY,
-      APPLY ? "applying" : rules.join(", ") || "none",
+      "main requires PDM Quality Gate (Status Check)",
+      contexts.includes(GATE),
+      contexts.join(", ") || "none",
+    );
+    record("main enforce_admins on", protection.enforce_admins?.enabled === true);
+    record(
+      "main not lock_branch (merge gotcha)",
+      protection.lock_branch?.enabled === false,
+      protection.lock_branch?.enabled === true ? "LOCKED — silently blocks all merges" : "",
+    );
+    record(
+      "main require_code_owner_reviews off (merge gotcha)",
+      protection.required_pull_request_reviews?.require_code_owner_reviews === false,
     );
   }
+
+  // environments (admin-gated — SKIP on a runner token)
+  const envs = readOrSkip("environment list", () => api("GET", "environments").environments.map((e) => e.name), "admin-gated; verify with an operator `make topology-check`");
+  if (envs) {
+    for (const env of ["development", "staging", "production", ARTIFACT_IGNORE_DID]) {
+      record(`environment ${env} exists`, envs.includes(env), envs.join(", "));
+    }
+  }
+  const envDetail = (env) => readOrSkip(`environment ${env} rules`, () => api("GET", `environments/${env}`), "admin-gated");
+  for (const env of ENVS_WITH_REVIEWER) {
+    const d = envDetail(env);
+    if (d) {
+      const rules = (d.protection_rules ?? []).map((r) => r.type);
+      record(
+        `environment ${env} has required_reviewers`,
+        rules.includes("required_reviewers") || APPLY,
+        APPLY ? "applying" : rules.join(", ") || "none",
+      );
+    }
+  }
   const pagesEnv = envDetail(ARTIFACT_IGNORE_DID);
-  const branchPolicies = api("GET", `environments/${ARTIFACT_IGNORE_DID}/deployment-branch-policies`).branch_policies ?? [];
-  record(
-    "github-pages env pinned to develop",
-    branchPolicies.some((p) => p.name === "develop"),
-    branchPolicies.map((p) => p.name).join(", ") || "none",
-  );
+  if (pagesEnv) {
+    const branchPolicies =
+      readOrSkip(
+        `github-pages branch policies`,
+        () => api("GET", `environments/${ARTIFACT_IGNORE_DID}/deployment-branch-policies`).branch_policies ?? [],
+        "admin-gated",
+      ) ?? [];
+    record(
+      "github-pages env pinned to develop",
+      branchPolicies.some((p) => p.name === "develop"),
+      branchPolicies.map((p) => p.name).join(", ") || "none",
+    );
+  }
 
   // Pages + DEPLOY_VERIFY_URL
   let pages;
   try {
     pages = api("GET", "pages");
     record("Pages enabled (workflow build)", pages.build_type === "workflow", pages.html_url ?? "");
-  } catch {
-    record("Pages enabled (workflow build)", false, "404 — needs a public repo on the free plan (kit §2)");
+  } catch (err) {
+    const msg = err.message.includes("404") ? "404 — needs a public repo on the free plan (kit §2)" : "unreadable to runner token; operator check required";
+    record("Pages enabled (workflow build)", false, msg);
   }
   const pageUrl = pages?.html_url ?? arg("--pages-url") ?? "";
-  const vars = api("GET", "actions/variables").variables ?? [];
-  record(
-    "DEPLOY_VERIFY_URL repo variable set",
-    vars.some((v) => v.name === "DEPLOY_VERIFY_URL") || (APPLY && Boolean(pageUrl)),
-    vars.map((v) => v.name).join(", ") || "none",
-  );
+  const vars = readOrSkip("DEPLOY_VERIFY_URL repo variable set", () => api("GET", "actions/variables").variables ?? [], "unreadable to runner token; operator check required");
+  if (vars) {
+    record(
+      "DEPLOY_VERIFY_URL repo variable set",
+      vars.some((v) => v.name === "DEPLOY_VERIFY_URL") || (APPLY && Boolean(pageUrl)),
+      vars.map((v) => v.name).join(", ") || "none",
+    );
+  }
 
   // ---------- apply (idempotent convergence) ----------
   if (APPLY) {
@@ -168,13 +204,14 @@ try {
     }
   }
 } catch (err) {
+  hadError = true;
   console.error(`::error:: topology wiring failed: ${err.message}`);
   process.exitCode = 1;
 }
 
 const failCount = RESULTS.filter((r) => !r.pass).length;
-if (RESULTS.length === 0) {
-  console.log("\nTopology check produced no results (see error above)");
+if (hadError || RESULTS.length === 0) {
+  console.log("\nTopology check did not complete (see error above)");
   process.exitCode = 1;
 } else if (failCount === 0) {
   console.log(`\nTopology ${APPLY ? "converged" : "conformant"}`);
