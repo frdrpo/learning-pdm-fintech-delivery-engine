@@ -47,6 +47,12 @@ export function Hero() {
           >
             Open the dashboard
           </a>
+          <a
+            href="/delivery"
+            className="rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-slate-200 transition-colors hover:border-white/30"
+          >
+            Delivery health
+          </a>
         </div>
       </div>
     </header>

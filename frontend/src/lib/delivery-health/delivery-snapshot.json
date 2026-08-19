@@ -1,0 +1,1223 @@
+{
+  "kind": "delivery-snapshot",
+  "generated_at": "2026-08-19T02:47:53.480Z",
+  "repository": "frdrpo/learning-pdm-fintech-delivery-engine",
+  "metrics": {
+    "generated_at": "2026-08-19T02:47:53.480Z",
+    "window": {
+      "days": 90,
+      "start": "2026-05-21T02:47:53.480Z",
+      "end": "2026-08-19T02:47:53.480Z"
+    },
+    "counts": {
+      "deployments": 100,
+      "releases": 3,
+      "merged_pulls": 70,
+      "failure_events": 1
+    },
+    "deployment_frequency_per_week": {
+      "github-pages": {
+        "count": 37,
+        "per_week": 2.8777777777777778
+      },
+      "staging": {
+        "count": 21,
+        "per_week": 1.6333333333333333
+      },
+      "development": {
+        "count": 22,
+        "per_week": 1.711111111111111
+      },
+      "production": {
+        "count": 20,
+        "per_week": 1.5555555555555556
+      }
+    },
+    "lead_time_for_changes_hours": {
+      "status": "computed",
+      "hours": 0.09055555555555556,
+      "prs_sampled": 11
+    },
+    "change_failure_rate": {
+      "status": "computed",
+      "deployments": 100,
+      "failures": 1,
+      "ratio": 0.01
+    },
+    "time_to_recovery_hours": {
+      "status": "computed",
+      "hours": 25.636666666666667,
+      "events_sampled": 1
+    },
+    "release_train_on_time": {
+      "status": "computed",
+      "interval_days": 14,
+      "anchor_date": "2026-08-17T10:33:21Z",
+      "planned_trains": 1,
+      "trains_delivered": 1,
+      "on_time_rate": 1,
+      "missed_train_numbers": []
+    }
+  },
+  "audit": {
+    "generated_at": "2026-08-19T02:47:53.480Z",
+    "repository": "frdrpo/learning-pdm-fintech-delivery-engine",
+    "lookback_days": 90,
+    "window_start": "2026-05-21T02:47:53.480Z",
+    "deployments": [
+      {
+        "id": 5974904288,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T02:31:59.000Z"
+      },
+      {
+        "id": 5974706791,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T02:13:01.000Z"
+      },
+      {
+        "id": 5974453197,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T01:47:50.000Z"
+      },
+      {
+        "id": 5974402282,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T01:42:18.000Z"
+      },
+      {
+        "id": 5974359360,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T01:37:40.000Z"
+      },
+      {
+        "id": 5974264209,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-19T01:28:40.000Z"
+      },
+      {
+        "id": 5974263797,
+        "environment": "development",
+        "ref": "c44d9cbdb902e02850ef1b3b13588fab6d852926",
+        "description": null,
+        "created_at": "2026-08-19T01:28:37.000Z"
+      },
+      {
+        "id": 5974262664,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-19T01:28:31.000Z"
+      },
+      {
+        "id": 5974185767,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T01:20:13.000Z"
+      },
+      {
+        "id": 5974109810,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T01:12:21.000Z"
+      },
+      {
+        "id": 5973956454,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-19T00:55:46.000Z"
+      },
+      {
+        "id": 5958945268,
+        "environment": "production",
+        "ref": "19f41acacb69456ce07f8c8bc9c0f485af8c092a",
+        "description": null,
+        "created_at": "2026-08-18T08:24:50.000Z"
+      },
+      {
+        "id": 5958942363,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:24:37.000Z"
+      },
+      {
+        "id": 5958941570,
+        "environment": "staging",
+        "ref": "19f41acacb69456ce07f8c8bc9c0f485af8c092a",
+        "description": null,
+        "created_at": "2026-08-18T08:24:33.000Z"
+      },
+      {
+        "id": 5958886677,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:20:41.000Z"
+      },
+      {
+        "id": 5958885909,
+        "environment": "development",
+        "ref": "19f41acacb69456ce07f8c8bc9c0f485af8c092a",
+        "description": null,
+        "created_at": "2026-08-18T08:20:38.000Z"
+      },
+      {
+        "id": 5958884066,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:20:30.000Z"
+      },
+      {
+        "id": 5958861489,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T08:18:54.000Z"
+      },
+      {
+        "id": 5958851332,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T08:18:10.000Z"
+      },
+      {
+        "id": 5958821985,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T08:16:09.000Z"
+      },
+      {
+        "id": 5958789061,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T08:13:56.000Z"
+      },
+      {
+        "id": 5958702680,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T08:08:20.000Z"
+      },
+      {
+        "id": 5958670156,
+        "environment": "production",
+        "ref": "245a9afa45d56aa2d671add0da980bc0e2ebd7f3",
+        "description": null,
+        "created_at": "2026-08-18T08:06:13.000Z"
+      },
+      {
+        "id": 5958643909,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:04:16.000Z"
+      },
+      {
+        "id": 5958643270,
+        "environment": "staging",
+        "ref": "245a9afa45d56aa2d671add0da980bc0e2ebd7f3",
+        "description": null,
+        "created_at": "2026-08-18T08:04:13.000Z"
+      },
+      {
+        "id": 5958634503,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:03:35.000Z"
+      },
+      {
+        "id": 5958633528,
+        "environment": "development",
+        "ref": "245a9afa45d56aa2d671add0da980bc0e2ebd7f3",
+        "description": null,
+        "created_at": "2026-08-18T08:03:30.000Z"
+      },
+      {
+        "id": 5958631617,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:03:21.000Z"
+      },
+      {
+        "id": 5958624873,
+        "environment": "production",
+        "ref": "852e9d562a69fdd7e51fd259e127e629c2984be6",
+        "description": null,
+        "created_at": "2026-08-18T08:02:50.000Z"
+      },
+      {
+        "id": 5958622641,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T08:02:40.000Z"
+      },
+      {
+        "id": 5958621736,
+        "environment": "staging",
+        "ref": "852e9d562a69fdd7e51fd259e127e629c2984be6",
+        "description": null,
+        "created_at": "2026-08-18T08:02:36.000Z"
+      },
+      {
+        "id": 5958331289,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:41:22.000Z"
+      },
+      {
+        "id": 5958274595,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:37:06.000Z"
+      },
+      {
+        "id": 5958224055,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:33:15.000Z"
+      },
+      {
+        "id": 5958195223,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:31:07.000Z"
+      },
+      {
+        "id": 5958110372,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:24:51.000Z"
+      },
+      {
+        "id": 5957979392,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:15:15.000Z"
+      },
+      {
+        "id": 5957909951,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:09:48.000Z"
+      },
+      {
+        "id": 5957807604,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T07:01:43.000Z"
+      },
+      {
+        "id": 5957761421,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:58:02.000Z"
+      },
+      {
+        "id": 5957725896,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:55:06.000Z"
+      },
+      {
+        "id": 5957652532,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:49:05.000Z"
+      },
+      {
+        "id": 5957601136,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:44:58.000Z"
+      },
+      {
+        "id": 5957547704,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:40:35.000Z"
+      },
+      {
+        "id": 5957538874,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:39:49.000Z"
+      },
+      {
+        "id": 5957538253,
+        "environment": "development",
+        "ref": "852e9d562a69fdd7e51fd259e127e629c2984be6",
+        "description": null,
+        "created_at": "2026-08-18T06:39:45.000Z"
+      },
+      {
+        "id": 5957536532,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:39:37.000Z"
+      },
+      {
+        "id": 5957494500,
+        "environment": "production",
+        "ref": "b290c59fe496fdaaaa99b9acb1be8df6345b778a",
+        "description": null,
+        "created_at": "2026-08-18T06:36:04.000Z"
+      },
+      {
+        "id": 5957491627,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:35:50.000Z"
+      },
+      {
+        "id": 5957491064,
+        "environment": "staging",
+        "ref": "b290c59fe496fdaaaa99b9acb1be8df6345b778a",
+        "description": null,
+        "created_at": "2026-08-18T06:35:47.000Z"
+      },
+      {
+        "id": 5957486043,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:35:21.000Z"
+      },
+      {
+        "id": 5957483753,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:35:10.000Z"
+      },
+      {
+        "id": 5957482694,
+        "environment": "development",
+        "ref": "b290c59fe496fdaaaa99b9acb1be8df6345b778a",
+        "description": null,
+        "created_at": "2026-08-18T06:35:05.000Z"
+      },
+      {
+        "id": 5957481108,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:34:58.000Z"
+      },
+      {
+        "id": 5957436931,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T06:31:16.000Z"
+      },
+      {
+        "id": 5957428698,
+        "environment": "production",
+        "ref": "12ea0224f800e2ef8519afe98427436ca924fedb",
+        "description": null,
+        "created_at": "2026-08-18T06:30:38.000Z"
+      },
+      {
+        "id": 5957425459,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:30:22.000Z"
+      },
+      {
+        "id": 5957424695,
+        "environment": "staging",
+        "ref": "12ea0224f800e2ef8519afe98427436ca924fedb",
+        "description": null,
+        "created_at": "2026-08-18T06:30:18.000Z"
+      },
+      {
+        "id": 5957419845,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:29:54.000Z"
+      },
+      {
+        "id": 5957419186,
+        "environment": "development",
+        "ref": "12ea0224f800e2ef8519afe98427436ca924fedb",
+        "description": null,
+        "created_at": "2026-08-18T06:29:50.000Z"
+      },
+      {
+        "id": 5957417807,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T06:29:43.000Z"
+      },
+      {
+        "id": 5956991236,
+        "environment": "production",
+        "ref": "146f956a98db9df258e997a6f1393c132a379d71",
+        "description": null,
+        "created_at": "2026-08-18T05:52:45.000Z"
+      },
+      {
+        "id": 5956947048,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T05:48:31.000Z"
+      },
+      {
+        "id": 5956918071,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:45:47.000Z"
+      },
+      {
+        "id": 5956917305,
+        "environment": "staging",
+        "ref": "146f956a98db9df258e997a6f1393c132a379d71",
+        "description": null,
+        "created_at": "2026-08-18T05:45:43.000Z"
+      },
+      {
+        "id": 5956866609,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:40:54.000Z"
+      },
+      {
+        "id": 5956865933,
+        "environment": "development",
+        "ref": "146f956a98db9df258e997a6f1393c132a379d71",
+        "description": null,
+        "created_at": "2026-08-18T05:40:50.000Z"
+      },
+      {
+        "id": 5956864270,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:40:41.000Z"
+      },
+      {
+        "id": 5956858307,
+        "environment": "production",
+        "ref": "acd0c5a31d44bbd607d907f928e43fab621171f2",
+        "description": null,
+        "created_at": "2026-08-18T05:40:08.000Z"
+      },
+      {
+        "id": 5956830446,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T05:37:18.000Z"
+      },
+      {
+        "id": 5956821748,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:36:26.000Z"
+      },
+      {
+        "id": 5956821307,
+        "environment": "staging",
+        "ref": "acd0c5a31d44bbd607d907f928e43fab621171f2",
+        "description": null,
+        "created_at": "2026-08-18T05:36:22.000Z"
+      },
+      {
+        "id": 5956777081,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T05:31:57.000Z"
+      },
+      {
+        "id": 5956773607,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:31:38.000Z"
+      },
+      {
+        "id": 5956773263,
+        "environment": "development",
+        "ref": "acd0c5a31d44bbd607d907f928e43fab621171f2",
+        "description": null,
+        "created_at": "2026-08-18T05:31:36.000Z"
+      },
+      {
+        "id": 5956772202,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T05:31:30.000Z"
+      },
+      {
+        "id": 5956739105,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T05:28:26.000Z"
+      },
+      {
+        "id": 5955842643,
+        "environment": "production",
+        "ref": "4b8d31047fc28a504c64f6832150c69280c45a0f",
+        "description": null,
+        "created_at": "2026-08-18T03:59:22.000Z"
+      },
+      {
+        "id": 5955840948,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:59:11.000Z"
+      },
+      {
+        "id": 5955840347,
+        "environment": "staging",
+        "ref": "4b8d31047fc28a504c64f6832150c69280c45a0f",
+        "description": null,
+        "created_at": "2026-08-18T03:59:07.000Z"
+      },
+      {
+        "id": 5955824052,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:57:22.000Z"
+      },
+      {
+        "id": 5955823421,
+        "environment": "development",
+        "ref": "4b8d31047fc28a504c64f6832150c69280c45a0f",
+        "description": null,
+        "created_at": "2026-08-18T03:57:18.000Z"
+      },
+      {
+        "id": 5955822237,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:57:10.000Z"
+      },
+      {
+        "id": 5955765459,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T03:51:06.000Z"
+      },
+      {
+        "id": 5955724187,
+        "environment": "production",
+        "ref": "c0841cb83501b9c4d4ae27fa95966600e41d4f9c",
+        "description": null,
+        "created_at": "2026-08-18T03:46:44.000Z"
+      },
+      {
+        "id": 5955720347,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:46:22.000Z"
+      },
+      {
+        "id": 5955719863,
+        "environment": "staging",
+        "ref": "c0841cb83501b9c4d4ae27fa95966600e41d4f9c",
+        "description": null,
+        "created_at": "2026-08-18T03:46:19.000Z"
+      },
+      {
+        "id": 5955669988,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:41:19.000Z"
+      },
+      {
+        "id": 5955669395,
+        "environment": "development",
+        "ref": "c0841cb83501b9c4d4ae27fa95966600e41d4f9c",
+        "description": null,
+        "created_at": "2026-08-18T03:41:15.000Z"
+      },
+      {
+        "id": 5955668096,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:41:07.000Z"
+      },
+      {
+        "id": 5955652467,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T03:39:27.000Z"
+      },
+      {
+        "id": 5955437116,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T03:18:15.000Z"
+      },
+      {
+        "id": 5955400470,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T03:14:57.000Z"
+      },
+      {
+        "id": 5955359458,
+        "environment": "github-pages",
+        "ref": "develop",
+        "description": null,
+        "created_at": "2026-08-18T03:10:33.000Z"
+      },
+      {
+        "id": 5955337894,
+        "environment": "production",
+        "ref": "155040fc2af36e703ca2d86575881f0f69ae117a",
+        "description": null,
+        "created_at": "2026-08-18T03:08:17.000Z"
+      },
+      {
+        "id": 5955328005,
+        "environment": "production",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:07:14.000Z"
+      },
+      {
+        "id": 5955327441,
+        "environment": "staging",
+        "ref": "155040fc2af36e703ca2d86575881f0f69ae117a",
+        "description": null,
+        "created_at": "2026-08-18T03:07:11.000Z"
+      },
+      {
+        "id": 5955291987,
+        "environment": "staging",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:03:34.000Z"
+      },
+      {
+        "id": 5955291487,
+        "environment": "development",
+        "ref": "155040fc2af36e703ca2d86575881f0f69ae117a",
+        "description": null,
+        "created_at": "2026-08-18T03:03:30.000Z"
+      },
+      {
+        "id": 5955290440,
+        "environment": "development",
+        "ref": "main",
+        "description": null,
+        "created_at": "2026-08-18T03:03:23.000Z"
+      }
+    ],
+    "releases": [
+      {
+        "tag": "v0.3.0",
+        "name": "Release v0.3.0",
+        "published_at": "2026-08-18T08:11:32.000Z"
+      },
+      {
+        "tag": "v0.2.0",
+        "name": "Release v0.2.0",
+        "published_at": "2026-08-18T02:39:39.000Z"
+      },
+      {
+        "tag": "v0.1.0",
+        "name": "Release v0.1.0",
+        "published_at": "2026-08-17T10:33:21.000Z"
+      }
+    ],
+    "merged_pulls": [
+      {
+        "number": 158,
+        "title": "docs(P21): chapter close-out — consistency matrix + ROADMAP status",
+        "merge_commit_sha": "f2f1d8897632723d69861d08df21995eb33a7e37",
+        "merged_at": "2026-08-19T01:46:50.000Z"
+      },
+      {
+        "number": 157,
+        "title": "docs(P20): ADR 0012 docs-home decision + agents-guide mirror sync",
+        "merge_commit_sha": "6eb7028358c756d6abe196e8559de0e3e0e26302",
+        "merged_at": "2026-08-19T01:41:15.000Z"
+      },
+      {
+        "number": 156,
+        "title": "docs(P19): README enhancement & optimization — wiki-wired front door",
+        "merge_commit_sha": "cad5078420131f4adfe9a63b051efe496329f9a4",
+        "merged_at": "2026-08-19T01:35:48.000Z"
+      },
+      {
+        "number": 147,
+        "title": "refactor(frontend): extract UI primitives, page shell, fix lib layering",
+        "merge_commit_sha": "c44d9cbdb902e02850ef1b3b13588fab6d852926",
+        "merged_at": "2026-08-19T01:27:56.000Z"
+      },
+      {
+        "number": 146,
+        "title": "Chore/opencode ollama config",
+        "merge_commit_sha": "7b6a9ac4d56f2fa15a0797900c58368a01a59aae",
+        "merged_at": "2026-08-19T00:54:59.000Z"
+      },
+      {
+        "number": 145,
+        "title": "docs(P18): chapter close-out — Phases 15-18 complete",
+        "merge_commit_sha": "19f41acacb69456ce07f8c8bc9c0f485af8c092a",
+        "merged_at": "2026-08-18T08:19:57.000Z"
+      },
+      {
+        "number": 144,
+        "title": "feat(P16): promote train-2 readiness view to production base",
+        "merge_commit_sha": "245a9afa45d56aa2d671add0da980bc0e2ebd7f3",
+        "merged_at": "2026-08-18T07:59:04.000Z"
+      },
+      {
+        "number": 143,
+        "title": "fix(P16): un-promote train-2 readiness view from main",
+        "merge_commit_sha": "6288e8ad0da71e8ae85c673d919db64b47d2bf84",
+        "merged_at": "2026-08-18T07:08:37.000Z"
+      },
+      {
+        "number": 142,
+        "title": "docs(plan): mark P17-T2/T3 executed and P16-T1 boarded",
+        "merge_commit_sha": "b6533a7c5beba074184adb29a7d310ea66ca819b",
+        "merged_at": "2026-08-18T07:00:53.000Z"
+      },
+      {
+        "number": 141,
+        "title": "docs(P17): record native copy-kit smoke readout",
+        "merge_commit_sha": "6220f266a6e27679dea26dc1a9f2a247a8ba3b66",
+        "merged_at": "2026-08-18T06:57:11.000Z"
+      },
+      {
+        "number": 140,
+        "title": "chore(P17): make topology check runner-token aware",
+        "merge_commit_sha": "24c5832b7e71ea29e13109db830eec87c08fc95d",
+        "merged_at": "2026-08-18T06:54:07.000Z"
+      },
+      {
+        "number": 139,
+        "title": "chore(P17): pass GH_TOKEN to gh in copy-kit smoke",
+        "merge_commit_sha": "7cc7410a5419236c2bee9b0137ebd4f3a8d4ad10",
+        "merged_at": "2026-08-18T06:48:00.000Z"
+      },
+      {
+        "number": 138,
+        "title": "chore(P17): resolve env reviewers from repo owner",
+        "merge_commit_sha": "b931b643e212994e10d3bd88d01064deeb55a5f8",
+        "merged_at": "2026-08-18T06:43:53.000Z"
+      },
+      {
+        "number": 137,
+        "title": "chore(P17): pass GITHUB_REPOSITORY to topology check",
+        "merge_commit_sha": "852e9d562a69fdd7e51fd259e127e629c2984be6",
+        "merged_at": "2026-08-18T06:39:07.000Z"
+      },
+      {
+        "number": 136,
+        "title": "chore(P17): fix copy-kit smoke runner paths",
+        "merge_commit_sha": "b290c59fe496fdaaaa99b9acb1be8df6345b778a",
+        "merged_at": "2026-08-18T06:34:26.000Z"
+      },
+      {
+        "number": 135,
+        "title": "PDM workflow run (feat/p17-copykit-rehearsal)",
+        "merge_commit_sha": "12ea0224f800e2ef8519afe98427436ca924fedb",
+        "merged_at": "2026-08-18T06:29:11.000Z"
+      },
+      {
+        "number": 134,
+        "title": "feat(frontend): train-board readiness view for train 2 (P16-T1)",
+        "merge_commit_sha": "e045ad82924d2ba869c4ff2f5c7312d23b9b0b29",
+        "merged_at": "2026-08-18T05:47:51.000Z"
+      },
+      {
+        "number": 133,
+        "title": "docs(P15): record close-out verification readout",
+        "merge_commit_sha": "146f956a98db9df258e997a6f1393c132a379d71",
+        "merged_at": "2026-08-18T05:36:18.000Z"
+      },
+      {
+        "number": 132,
+        "title": "PDM workflow run (feat/p15-topology-reconcile)",
+        "merge_commit_sha": "acd0c5a31d44bbd607d907f928e43fab621171f2",
+        "merged_at": "2026-08-18T05:30:57.000Z"
+      },
+      {
+        "number": 117,
+        "title": "Promote: simulator plan status fix to main",
+        "merge_commit_sha": "4b8d31047fc28a504c64f6832150c69280c45a0f",
+        "merged_at": "2026-08-18T03:56:35.000Z"
+      },
+      {
+        "number": 116,
+        "title": "docs(plans): mark release-train-simulator chapter complete",
+        "merge_commit_sha": "72ebdb5858d0f21521a41c41914415bd83367d33",
+        "merged_at": "2026-08-18T03:50:32.000Z"
+      },
+      {
+        "number": 115,
+        "title": "Promote: Cadence & Adoption close-out (Phases 12-14) to main",
+        "merge_commit_sha": "c0841cb83501b9c4d4ae27fa95966600e41d4f9c",
+        "merged_at": "2026-08-18T03:40:36.000Z"
+      },
+      {
+        "number": 114,
+        "title": "docs: close out Cadence & Adoption chapter (Phases 12-14)",
+        "merge_commit_sha": "412c99077fcd835dd0109853cc406c4e006184c7",
+        "merged_at": "2026-08-18T03:38:47.000Z"
+      },
+      {
+        "number": 113,
+        "title": "Promote: milestone-gated, self-contained release-on-tag (v0.2.0)",
+        "merge_commit_sha": "155040fc2af36e703ca2d86575881f0f69ae117a",
+        "merged_at": "2026-08-18T03:02:51.000Z"
+      },
+      {
+        "number": 111,
+        "title": "chore(ci): sync dependabot actions bumps (2nd batch) into canonical",
+        "merge_commit_sha": "be8d93d9fbc62a732ba209e26ebe97ba0a2f4b9c",
+        "merged_at": "2026-08-18T01:22:33.000Z"
+      },
+      {
+        "number": 96,
+        "title": "chore(deps): bump actions/configure-pages from 5 to 6",
+        "merge_commit_sha": "94fbc5b27ff3f701f4853875990e4ee7a7ba9303",
+        "merged_at": "2026-08-18T01:21:55.000Z"
+      },
+      {
+        "number": 95,
+        "title": "chore(deps): bump pnpm/action-setup from 4 to 6",
+        "merge_commit_sha": "72cc2257430a54f1bc9306b83324dff735889f16",
+        "merged_at": "2026-08-18T01:21:51.000Z"
+      },
+      {
+        "number": 94,
+        "title": "chore(deps): bump actions/deploy-pages from 4 to 5",
+        "merge_commit_sha": "93d7d1d0523b66b526836a9643b12f4adba18e69",
+        "merged_at": "2026-08-18T01:21:48.000Z"
+      },
+      {
+        "number": 110,
+        "title": "docs(plans): chapter close-out — Phases 9-11 complete",
+        "merge_commit_sha": "e9fefcd497d7767a2e281f36604acf170b54141f",
+        "merged_at": "2026-08-18T01:19:08.000Z"
+      },
+      {
+        "number": 109,
+        "title": "docs(roadmap): Phase 11 truthing readout",
+        "merge_commit_sha": "09c994b853ee638602e6cc38dbab21217e3f4fc3",
+        "merged_at": "2026-08-18T01:17:53.000Z"
+      },
+      {
+        "number": 108,
+        "title": "restore: main parity with develop (Phases 9-10) via protected promotion",
+        "merge_commit_sha": "03ee5dfa27479db848aeffa7ee85a00331f10d70",
+        "merged_at": "2026-08-18T01:09:34.000Z"
+      },
+      {
+        "number": 107,
+        "title": "chore(ci): sync dependabot actions bumps into canonical",
+        "merge_commit_sha": "6797a82b7aad02edd56e18bb61f15047bf5b04d0",
+        "merged_at": "2026-08-18T01:05:52.000Z"
+      },
+      {
+        "number": 93,
+        "title": "chore(deps): bump actions/upload-pages-artifact from 3 to 5",
+        "merge_commit_sha": "6e9a7dd468a6ac289c7745c840c723b702d314b2",
+        "merged_at": "2026-08-18T01:00:52.000Z"
+      },
+      {
+        "number": 92,
+        "title": "chore(deps): bump actions/upload-artifact from 4 to 7",
+        "merge_commit_sha": "c308e04273a284352ced90a4809b3ea651c292a6",
+        "merged_at": "2026-08-18T01:00:44.000Z"
+      },
+      {
+        "number": 106,
+        "title": "docs(roadmap): Phase 9/10 status + T10.2 drill DORA readout",
+        "merge_commit_sha": "439be9bf8bfeb573b1460d3999271fb1da0cb97f",
+        "merged_at": "2026-08-18T00:56:18.000Z"
+      },
+      {
+        "number": 104,
+        "title": "feat(release-pipeline): real rollback record + controlled failure-drill kit",
+        "merge_commit_sha": "3fa3968038a0b96a237dd8c02fd19f39f0398ebb",
+        "merged_at": "2026-08-18T00:46:46.000Z"
+      },
+      {
+        "number": 103,
+        "title": "feat(telemetry): release-train on-time signal + engine summary draft",
+        "merge_commit_sha": "b1a14d150294b2557e0d7e87ae64442c5e18a31c",
+        "merged_at": "2026-08-18T00:40:17.000Z"
+      },
+      {
+        "number": 102,
+        "title": "feat(frontend): delivery dashboard + release-train readiness model",
+        "merge_commit_sha": "c16aa4625838963f9ad5734ae4f624366f24a6cc",
+        "merged_at": "2026-08-18T00:40:13.000Z"
+      },
+      {
+        "number": 101,
+        "title": "docs(plans): phases 9-10 parallelization plan",
+        "merge_commit_sha": "18a4807c995e658b8e67a51e5a5967142d962c7e",
+        "merged_at": "2026-08-18T00:40:09.000Z"
+      },
+      {
+        "number": 91,
+        "title": "docs(frontend): replace create-next-app boilerplate with project-accurate README",
+        "merge_commit_sha": "71adff759ce64595a89b9500011101aa33693cb5",
+        "merged_at": "2026-08-17T11:29:40.000Z"
+      },
+      {
+        "number": 90,
+        "title": "docs(plans): mark Phase 8 complete (maiden voyage first delivery flight)",
+        "merge_commit_sha": "a535b70a03efb4c14ef5ec2d080285f6736d6424",
+        "merged_at": "2026-08-17T11:13:20.000Z"
+      },
+      {
+        "number": 89,
+        "title": "fix(release-on-tag): use github.ref_name in artifact path",
+        "merge_commit_sha": "d8c78dd67f15cdc0b2c0a00c79aaecec0c6ca4aa",
+        "merged_at": "2026-08-17T11:12:39.000Z"
+      },
+      {
+        "number": 88,
+        "title": "fix(release-pipeline): map DEPLOY_VERIFY_URL into verify step env",
+        "merge_commit_sha": "bf48e57e0e0c92865220b8b515c2f50804bc9610",
+        "merged_at": "2026-08-17T11:09:52.000Z"
+      },
+      {
+        "number": 87,
+        "title": "feat(pages): publish static-exported frontend to GitHub Pages for live verify",
+        "merge_commit_sha": "be64aed524bb85142f68535e8d2efde08022cdc4",
+        "merged_at": "2026-08-17T11:03:02.000Z"
+      },
+      {
+        "number": 86,
+        "title": "docs(plans): record P8-T2/T3/T4 completion + baseline DORA readout",
+        "merge_commit_sha": "a31605ed91b8c54536733bdf4053f09de379d00b",
+        "merged_at": "2026-08-17T10:57:38.000Z"
+      },
+      {
+        "number": 85,
+        "title": "fix(telemetry): count failure events by label, not title regex",
+        "merge_commit_sha": "6c330e848a68076f046c418bc6af951f424e162a",
+        "merged_at": "2026-08-17T10:56:14.000Z"
+      },
+      {
+        "number": 84,
+        "title": "P8-T1: Promote develop to main (first real delivery flight)",
+        "merge_commit_sha": "e94d9ef22c28a26e3dcef70de5df1ee5cf3778ff",
+        "merged_at": "2026-08-17T10:01:20.000Z"
+      },
+      {
+        "number": 83,
+        "title": "feat(simulator): headless run mode, workflow, and ADR 0010 (Phase 13)",
+        "merge_commit_sha": "1829cb5087c6164f0c37d7fdc979ef362bf93379",
+        "merged_at": "2026-08-17T09:46:00.000Z"
+      },
+      {
+        "number": 80,
+        "title": "feat(simulator): interactive release-train simulator route (Phase 12)",
+        "merge_commit_sha": "738e8861b8be090581bd73df4c363405364b1af8",
+        "merged_at": "2026-08-17T09:40:45.000Z"
+      },
+      {
+        "number": 78,
+        "title": "feat(simulator): deterministic release-train simulation model (Phase 11)",
+        "merge_commit_sha": "9acd0862e87d40146af9d89493b79e8f3859deb9",
+        "merged_at": "2026-08-17T09:35:04.000Z"
+      },
+      {
+        "number": 76,
+        "title": "docs(adr): reorder decision log into decision order (ADR hygiene)",
+        "merge_commit_sha": "a4834bb23c38b9a2bab336b1526f9440bb12af85",
+        "merged_at": "2026-08-17T09:27:08.000Z"
+      },
+      {
+        "number": 49,
+        "title": "docs(roadmap): mark Phase 7 complete",
+        "merge_commit_sha": "7813984db41899fdbd5d61ab4e3f55a66114998a",
+        "merged_at": "2026-08-17T08:34:35.000Z"
+      },
+      {
+        "number": 47,
+        "title": "Phase 7: delivery telemetry & audit trail",
+        "merge_commit_sha": "036fca5fcd479fa4a71b6a3971dc5cafcaddbfed",
+        "merged_at": "2026-08-17T08:30:14.000Z"
+      },
+      {
+        "number": 46,
+        "title": "feat(frontend): land Next.js app and rewire PDM gates to pnpm",
+        "merge_commit_sha": "828ba9d0d99bfa8f691ce059a299f04a363320c8",
+        "merged_at": "2026-08-17T08:11:02.000Z"
+      },
+      {
+        "number": 44,
+        "title": "docs(runbook): document make sync-deps after dependabot merges",
+        "merge_commit_sha": "eb651566fbc47dbe7dd31abb8f10a99c345978b8",
+        "merged_at": "2026-08-17T07:24:56.000Z"
+      },
+      {
+        "number": 43,
+        "title": "fix(ci): adopt dependabot version bumps into canonical workflows",
+        "merge_commit_sha": "8e94859869ca2a50ae4fd46a116d5ae01ab96ee1",
+        "merged_at": "2026-08-17T07:24:09.000Z"
+      },
+      {
+        "number": 42,
+        "title": "docs(roadmap): mark Phases 3-5 complete and update current state",
+        "merge_commit_sha": "166e02e26497415e1dda9308a8959120deabb6df",
+        "merged_at": "2026-08-17T07:21:08.000Z"
+      },
+      {
+        "number": 41,
+        "title": "fix(ci): sync dependabot version bumps into canonical workflows",
+        "merge_commit_sha": "318673015b79524b574b7be4571a9804b92814ee",
+        "merged_at": "2026-08-17T07:20:15.000Z"
+      },
+      {
+        "number": 39,
+        "title": "chore(deps): bump eslint from 9.39.5 to 10.8.1",
+        "merge_commit_sha": "f7fef7b5f29e169a7fce13f201e757dc095b0fc1",
+        "merged_at": "2026-08-17T07:19:53.000Z"
+      },
+      {
+        "number": 40,
+        "title": "chore(deps): bump actions/download-artifact from 4 to 8",
+        "merge_commit_sha": "79695bc3ffe8465dbecd1809063f93aa702218c0",
+        "merged_at": "2026-08-17T07:19:37.000Z"
+      },
+      {
+        "number": 38,
+        "title": "chore(deps): bump actions/github-script from 7 to 9",
+        "merge_commit_sha": "b8fb19fbadf0e73c17f1402a68ac2a2683df97e6",
+        "merged_at": "2026-08-17T07:19:08.000Z"
+      },
+      {
+        "number": 37,
+        "title": "chore(deps): bump google/osv-scanner-action from 1.8.5 to 2.5.0",
+        "merge_commit_sha": "8926475d2ab30fc967d4654bf5712c94a638e355",
+        "merged_at": "2026-08-17T07:18:39.000Z"
+      },
+      {
+        "number": 36,
+        "title": "chore(deps): bump actions/checkout from 4 to 7",
+        "merge_commit_sha": "3612c5985f467c4ca3dde225c73a2ff37423d91d",
+        "merged_at": "2026-08-17T07:18:15.000Z"
+      },
+      {
+        "number": 35,
+        "title": "chore(deps): bump actions/setup-node from 4 to 7",
+        "merge_commit_sha": "0db19329fb1c4f243ca821d3ab8d1b1255ff0788",
+        "merged_at": "2026-08-17T07:17:56.000Z"
+      },
+      {
+        "number": 32,
+        "title": "Phase 5: Tracked documentation & learning material (architecture, runbook, agent guide, ADRs)",
+        "merge_commit_sha": "b8df67c4361c55c673933fa41f316e3a103bba6b",
+        "merged_at": "2026-08-17T07:16:37.000Z"
+      },
+      {
+        "number": 31,
+        "title": "Phase 4: PDM surface extensions (Dependabot, security re-scan, tag release, rollback, AI risk review)",
+        "merge_commit_sha": "401c624fe1eb0e33bb61295acd1f75f703968115",
+        "merged_at": "2026-08-17T07:16:07.000Z"
+      },
+      {
+        "number": 30,
+        "title": "Feat/remove act remote",
+        "merge_commit_sha": "6bbf1fe5afb9c5719c9027d739a0f6cce1cba579",
+        "merged_at": "2026-08-17T06:47:34.000Z"
+      },
+      {
+        "number": 3,
+        "title": "Phase 0/1: PDM roadmap + verified local harness baseline",
+        "merge_commit_sha": "782426ba6dd0fd32107e3b94db195708b0003f43",
+        "merged_at": "2026-08-17T05:34:43.000Z"
+      },
+      {
+        "number": 2,
+        "title": "Add quality gate and release pipeline; harden security checks",
+        "merge_commit_sha": "1b728d22a92b6d04a16eb94d618da2bbcf5d70df",
+        "merged_at": "2026-08-17T03:00:10.000Z"
+      },
+      {
+        "number": 1,
+        "title": "Add PDM delivery engine workflows and local test tooling",
+        "merge_commit_sha": "96b87a76eefd98cadeda1357571aa1118af56cbb",
+        "merged_at": "2026-08-17T01:22:15.000Z"
+      }
+    ],
+    "failure_events": [
+      {
+        "number": 105,
+        "title": "OPS drill: controlled failure on development (train failure recovery)",
+        "created_at": "2026-08-18T00:53:47.000Z"
+      }
+    ],
+    "release_trains": [
+      {
+        "train": 1,
+        "planned_departure": "2026-08-17T10:33:21.000Z",
+        "delivered": true
+      }
+    ]
+  }
+}

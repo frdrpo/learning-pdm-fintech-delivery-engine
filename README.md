@@ -15,6 +15,7 @@ The delivery engine is **live and operating at cadence** — Phases 0–21 compl
 - **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). The P21 close-out telemetry run (32205889156) confirmed the same numbers unchanged. Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
 - **Release train**: 14-day cadence (ADR 0009); train 3 departs **09-14** (cutoff 09-11), train 4 departs 09-28 — see the [Release Train Calendar](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Release-Train-Calendar).
 - **Branch topology**: `develop` (default, integration) + `main` (protected; requires the `PDM Quality Gate (Status Check)`). Feature/track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
+- **Product surface**: the frontend now renders the live delivery telemetry at [`/delivery`](https://frdrpo.github.io/learning-pdm-fintech-delivery-engine/delivery/) — DORA metric cards, the release-train status panel (ADR 0009 window logic), and the audit trail — from a committed, versioned snapshot of the `delivery-telemetry` export (honest `insufficient-data` empty states, never invented numbers).
 
 ## Repository Structure
 
@@ -36,7 +37,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
-- `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests. This is the application the delivery gates exercise.
+- `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests, plus a `/delivery` route rendering the live delivery-health snapshot (DORA metrics, release-train status, audit trail). This is the application the delivery gates exercise.
 
 ## System Flow
 

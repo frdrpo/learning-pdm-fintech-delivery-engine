@@ -10,3 +10,6 @@ node_modules/
 
 AGENTS.md
 .opencode
+
+# Throwaway wiki clone used for wiki-only edits (ADR 0013)
+.wiki-tmp/
