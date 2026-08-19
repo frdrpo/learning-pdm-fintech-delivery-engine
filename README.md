@@ -38,6 +38,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
 - `agents/` - The canonical AI agent fleet (ADR 0015): five scrubbed, model-pin-free agent definitions (`pm`, `docs`, `software-engineer`, `junior-software-engineer`, `docs-reader`) installed into a local opencode runtime with `make fleet-sync`. Runtime config (providers/models, keys) stays local — `.opencode/` and `opencode.json` are gitignored; `agents/opencode.example.json` is the scrubbed template (`{env:...}` overridable).
+- `examples/` - Reference implementations and workflow templates for adopting the PDM framework and AI agent patterns (Issue #184): `fintech-agent-runner/` (scrubbed agent fleet + `fleet-sync`), `pdm-workflow-templates/` (actionlint-valid quality-gate/compliance/agent-runner templates), and `agent-skills-demo/` (skill-resolution demo + mocked `node:test` CI scaffold). Validated offline by `make test-examples`, wired into the quality gate.
 - `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests, plus a `/delivery` route rendering the live delivery-health snapshot (DORA metrics, release-train status, audit trail). This is the application the delivery gates exercise.
 
 ## System Flow
@@ -127,6 +128,7 @@ The `Makefile` is the local operator surface for the engine. All targets run nat
 | `make test-frontend` | CI-parity frontend suite: install + lint + typecheck + test + build (pnpm) |
 | `make test-gh` | Push current branch + open/update a PR to `develop`, then `gh pr checks --watch` the native gate runs |
 | `make test-consumer-path` | P17 copy-kit rehearsal: execute kit §1→§8 in a throwaway consumer workspace (`scripts/consumer-smoke.mjs`) |
+| `make test-examples` | Issue #184 examples validation: READMEs + structure, agent scrub-rules, workflow-template actionlint + artifact guards, mocked contract test (`scripts/examples-test.mjs`) |
 | `make topology-check` | Verify the documented repo topology against the live repo (`scripts/wire-topology.mjs --check`) |
 | `make topology-apply` | Converge the topology (branch protection, environments, Pages, `DEPLOY_VERIFY_URL`) |
 
@@ -146,6 +148,22 @@ Workflows are verified by running them on GitHub — no local Docker/`act` harne
 3. For non-PR runs (`workflow_dispatch`), reports and dry-run deployment records are uploaded as run artifacts instead of PR comments — download them from the run's "Artifacts" section.
 
 `push` to `main` (a merge of a release PR cut by `release-on-tag` dispatch, or any other merge) triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
+
+## Examples & Templates (Issue #184)
+
+The `examples/` tree ships reference implementations and workflow templates for adopting the PDM framework and AI agent patterns:
+
+- `examples/fintech-agent-runner/` — a minimal opencode agent fleet (`pm`, `delivery-engineer`, `compliance-reviewer`) with scrub-safe definitions, `fleet-sync`, and a local `node --test` hygiene test (ADR 0015 pattern).
+- `examples/pdm-workflow-templates/` — ready-to-copy actionlint-valid workflows: `quality-gate.yml`, `compliance-guardrail.yml`, `agent-runner.yml` (dispatch-only).
+- `examples/agent-skills-demo/` — skill-resolution demo + a dependency-free mocked `node:test` CI scaffold.
+
+Validate them offline, or let the quality gate do it on every PR:
+
+```bash
+make test-examples   # README/structure + fleet scrub rules + template actionlint/guards + mock contract test
+```
+
+To adopt: copy a subproject into your repo, follow its `README.md` (cp commands + renames), then run `make test-examples` and (for templates) `make sync`/`make lint`. See the [wiki Examples and Templates page](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Examples-and-Templates).
 
 ## Frontend Testing
 

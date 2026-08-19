@@ -1,0 +1,50 @@
+name: PDM Agent Runner (dispatch)
+
+# Template: run the opencode AI agent fleet headlessly from a workflow_dispatch.
+# Demonstrates the ADR 0015 fleet ops loop without a PR trigger — so its
+# artifact upload needs no `github.event.pull_request` guard by construction.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: agent-runner
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  fleet-brief:
+    name: Fleet brief (advisory, dispatch only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install the canonical fleet into the runtime
+        shell: bash
+        run: make fleet-sync
+
+      - name: Run the fleet brief (agent runner)
+        shell: bash
+        run: |
+          if command -v opencode >/dev/null 2>&1; then
+            # Replace with your agent runner of choice (opencode, codex, ...).
+            opencode run "Produce a labeled agent-advisory brief (kind: agent-advisory) and write it to .github/pdm/reports/agent-brief.md"
+          else
+            echo "No agent runner installed on this runner; producing a mock brief."
+            printf '%s\n' \
+              'kind: agent-advisory' \
+              'scope: weekly delivery-health brief' \
+              'payload: mocked - install the fleet runner to produce a real brief.' \
+              > .github/pdm/reports/agent-brief.md
+          fi
+
+      - name: Upload advisory brief
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: agent-brief
+          path: .github/pdm/reports/agent-brief.md
+          retention-days: 7

@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path topology-check topology-apply
+.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path test-examples topology-check topology-apply
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -71,6 +71,12 @@ test-gh:
 # Requires actionlint + pnpm on PATH (homebrew pnpm on macOS; see AGENTS.md).
 test-consumer-path:
 	@node scripts/consumer-smoke.mjs --root . $(REHEARSAL_ARGS)
+
+# Issue #184 — validate the examples/ deliverables offline (READMEs + structure,
+# agent scrub-rules, workflow template actionlint + artifact-guard invariants,
+# mocked "agent runner" contract test). Runs in the quality-gate workflow-lint job.
+test-examples:
+	@node scripts/examples-test.mjs
 
 # Kit §2: idempotent topology check/apply against the live repo (gh CLI).
 # `make topology-check` verifies the documented target state; `make topology-apply`
