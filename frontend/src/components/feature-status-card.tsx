@@ -1,4 +1,8 @@
-export type FeatureRank = "ready" | "in-flight" | "blocked";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import type { FeatureRank } from "@/lib/dashboard";
+
+export type { FeatureRank } from "@/lib/dashboard";
 
 export type FeatureStatusCardProps = {
   name: string;
@@ -13,10 +17,10 @@ const RANK_LABEL: Record<FeatureRank, string> = {
   blocked: "Blocked",
 };
 
-const RANK_ACCENT: Record<FeatureRank, string> = {
-  ready: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  "in-flight": "border-cyan-400/30 bg-cyan-400/10 text-cyan-300",
-  blocked: "border-rose-400/30 bg-rose-400/10 text-rose-300",
+const RANK_TONE: Record<FeatureRank, BadgeTone> = {
+  ready: "green",
+  "in-flight": "cyan",
+  blocked: "rose",
 };
 
 export function FeatureStatusCard({
@@ -26,25 +30,21 @@ export function FeatureStatusCard({
   train,
 }: FeatureStatusCardProps) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <Card as="section">
       <div className="flex items-center justify-between gap-4">
         <h4 className="text-base font-semibold text-white">{name}</h4>
         <div className="flex items-center gap-2">
           {train !== undefined ? (
-            <span className="rounded-full border border-white/15 px-2.5 py-0.5 text-[11px] text-slate-400">
+            <Badge size="sm" tone="neutral" font="normal">
               Train {train}
-            </span>
+            </Badge>
           ) : null}
-          <span
-            role="status"
-            aria-label={RANK_LABEL[rank]}
-            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${RANK_ACCENT[rank]}`}
-          >
+          <Badge size="sm" tone={RANK_TONE[rank]} label={RANK_LABEL[rank]}>
             {RANK_LABEL[rank]}
-          </span>
+          </Badge>
         </div>
       </div>
       <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
-    </section>
+    </Card>
   );
 }
