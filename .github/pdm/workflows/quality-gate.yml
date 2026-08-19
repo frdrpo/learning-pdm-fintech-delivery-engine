@@ -34,6 +34,12 @@ jobs:
         shell: bash
         run: ./actionlint -color -pyflakes=0
 
+      - name: Validate examples and templates (Issue #184)
+        shell: bash
+        run: |
+          export PATH="$GITHUB_WORKSPACE:$PATH"
+          node scripts/examples-test.mjs
+
   code-quality:
     name: Code Quality (lint/typecheck/test/build)
     runs-on: ubuntu-latest
