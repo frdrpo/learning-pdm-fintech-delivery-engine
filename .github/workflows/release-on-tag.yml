@@ -1,17 +1,20 @@
 name: PDM Release on Tag
 
 # Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
-# Releases are gated on a closed GitHub milestone titled v<version> and are
-# self-contained: GITHUB_TOKEN-created tags/commits never spawn a new workflow
-# run, so the dispatch path does the whole release (bump + build + createRelease)
-# in one run instead of chaining on a tag push.
+# A version release is a PR to main. The dispatch path is the release cut: it
+# validates the version, enforces the closed-milestone gate (auto-creating the
+# milestone as open if missing), bumps frontend/package.json on develop, and
+# opens (or updates) the release PR develop -> main titled Release v<version>.
+# Merging that PR pushes main, which triggers release-pipeline for real; tagging
+# main with v<version> publishes the GitHub Release via the push-tag path below.
+# GITHUB_TOKEN-created tags/commits never spawn a new workflow run, so the cut
+# (dispatch -> PR) and the publish (tag push) stay explicit, human steps.
 #
 # Paths:
-#   - workflow_dispatch (version input): validates, gates on the milestone
-#     (auto-creates it as open if missing), bumps frontend/package.json on
-#     develop, then builds and creates the GitHub Release in the same run.
-#   - push of a v* tag: still gated on a closed milestone before publishing
-#     (manual tag pushes cannot bypass the gate).
+#   - workflow_dispatch (version input): validates, gates on the milestone,
+#     bumps frontend/package.json on develop, and opens the release PR to main.
+#   - push of a v* tag: builds and creates the GitHub Release, still gated on a
+#     closed milestone (manual tag pushes cannot bypass the gate).
 
 on:
   push:
@@ -31,16 +34,18 @@ concurrency:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 jobs:
-  cut-and-tag:
-    name: Cut release (bump develop + tag)
+  cut-release-pr:
+    name: Cut release PR (bump develop + open PR to main)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.validate.outputs.version }}
       tag: ${{ steps.validate.outputs.tag }}
       sha: ${{ steps.bump.outputs.sha }}
+      pr_url: ${{ steps.open-pr.outputs.url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -125,6 +130,30 @@ jobs:
           fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Open release PR to main
+        id: open-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          PR_BODY="Release cut by the PDM delivery engine (milestone-gated).
+
+          - version: v${{ steps.validate.outputs.version }}
+          - milestone: ${{ steps.gate.outputs.milestone }}
+          - head: develop (${{ steps.bump.outputs.sha }})
+
+          Review the gates, merge to main to deploy (release-pipeline), then tag main with \`v${{ steps.validate.outputs.version }}\` to publish the GitHub Release."
+          if gh pr view --base main --head develop --json number --jq .number >/dev/null 2>&1; then
+            gh pr edit develop --title "Release v${{ steps.validate.outputs.version }}" --body "${PR_BODY}"
+            PR_URL="$(gh pr view --base main --head develop --json url --jq .url)"
+          else
+            PR_URL="$(gh pr create --base main --head develop \
+              --title "Release v${{ steps.validate.outputs.version }}" \
+              --body "${PR_BODY}")"
+          fi
+          echo "url=${PR_URL}" >> "$GITHUB_OUTPUT"
+          echo "Release PR: ${PR_URL}"
+
       - name: Write cut summary
         shell: bash
         env:
@@ -137,7 +166,8 @@ jobs:
           - tag: ${{ steps.validate.outputs.tag }}
           - milestone: ${MILESTONE:-n/a}
           - commit: ${{ steps.bump.outputs.sha }}
-          - mode: self-contained run (no event chaining)
+          - pr: ${{ steps.open-pr.outputs.url }}
+          - mode: release PR to main (merge deploys; tag main to publish)
           EOF
 
       - name: Upload cut summary
@@ -149,8 +179,7 @@ jobs:
 
   release:
     name: Build & publish release
-    needs: cut-and-tag
-    if: github.event_name == 'push' || needs.cut-and-tag.result == 'success'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -158,11 +187,11 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-          ref: ${{ needs.cut-and-tag.outputs.sha || github.sha }}
+          ref: ${{ github.sha }}
 
       - name: Milestone gate (require closed milestone)
         env:
-          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
+          TAG_NAME: ${{ github.ref_name }}
         uses: actions/github-script@v9
         with:
           script: |
@@ -216,7 +245,7 @@ jobs:
       - name: Assemble release info
         shell: bash
         env:
-          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
+          TAG_NAME: ${{ github.ref_name }}
         run: |
           mkdir -p dist .github/pdm/releases
           {
@@ -231,7 +260,7 @@ jobs:
       - name: Generate release notes
         shell: bash
         env:
-          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
+          TAG_NAME: ${{ github.ref_name }}
         run: |
           mkdir -p .github/pdm/releases
           notes_file=".github/pdm/releases/release-notes-${TAG_NAME}.md"
@@ -268,8 +297,8 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          TAG_NAME: ${{ needs.cut-and-tag.outputs.tag || github.ref_name }}
-          COMMIT_SHA: ${{ needs.cut-and-tag.outputs.sha || github.sha }}
+          TAG_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
         uses: actions/github-script@v9
         with:
           script: |
@@ -291,5 +320,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: release-notes
-          path: .github/pdm/releases/release-notes-${{ needs.cut-and-tag.outputs.tag || github.ref_name }}.md
+          path: .github/pdm/releases/release-notes-${{ github.ref_name }}.md
           retention-days: 7
