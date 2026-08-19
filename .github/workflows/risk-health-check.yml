@@ -1,6 +1,6 @@
 name: PDM Risk & Code Health Check
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # This workflow posts a PR comment or uploads a report artifact on non-PR runs.
 
 on:

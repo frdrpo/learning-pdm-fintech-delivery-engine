@@ -1,7 +1,7 @@
 name: PDM Copy-Kit Smoke (Rehearsal)
 
 # P17 in-repo "consumer-path" rehearsal — a documented SUBSTITUTION for running
-# the copy-kit against a real second repo (docs/evidence/p17-consumer-repo-flight.md
+# the copy-kit against a real second repo (the wiki page P17-Consumer-Repo-Flight
 # records why). Executes the kit's §1 copy commands literally into a scratch
 # consumer on a fresh runner, brings the stand-in app (§3), then runs the engine's
 # offline checks INSIDE that rehearsed consumer and verifies the kit §8

@@ -1,6 +1,6 @@
 name: PDM Delivery Telemetry & Audit Trail
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # Reads GitHub-native delivery records via the API and exports the audit trail +
 # DORA-style telemetry as run artifacts (never committed).
 

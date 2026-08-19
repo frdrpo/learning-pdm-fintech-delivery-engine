@@ -35,7 +35,7 @@ function run(cmd, args, cwd, timeoutMs = 600_000) {
   return execFileSync(cmd, args, { cwd, stdio: "inherit", timeout: timeoutMs });
 }
 
-// ---- §1 copy (literal commands from docs/engine-copy-kit.md) ----
+// ---- §1 copy (literal commands from the wiki Engine-Copy-Kit page) ----
 // NOTE: create only the consumer ROOT (not <consumer>/.github) — `cp -R SRC
 // EXISTING_DIR` would copy INTO it (`.github/.github`); an absent destination
 // is created by cp.

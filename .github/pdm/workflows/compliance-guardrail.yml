@@ -1,6 +1,6 @@
 name: PDM Compliance & Security Guardrail
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # Scans the PR base..head with trufflehog and posts a pass/fail comment on PR runs.
 
 on:

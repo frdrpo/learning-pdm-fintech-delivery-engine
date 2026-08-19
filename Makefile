@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps test-frontend test-gh test-consumer-path topology-check topology-apply
+.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path topology-check topology-apply
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -17,6 +17,14 @@ sync-deps:
 	@mkdir -p $(PDM_WF)
 	@cp $(GH_WF)/*.yml $(PDM_WF)/
 	@echo "Adopted $(GH_WF) version bumps into $(PDM_WF); run 'make sync' to re-mirror."
+
+# Install the canonical AI agent fleet (agents/) into the local opencode
+# runtime (.opencode/agent/). One-way copy — the local install is gitignored
+# local state (ADR 0015), so no drift check applies here.
+fleet-sync:
+	@mkdir -p .opencode/agent
+	@cp agents/*.md .opencode/agent/
+	@echo "Installed agents/ -> .opencode/agent/ (runtime config stays local, ADR 0015)"
 
 # Run the frontend suite natively (no container needed): install + lint +
 # typecheck + tests + build. Requires pnpm on PATH (brew install pnpm, or

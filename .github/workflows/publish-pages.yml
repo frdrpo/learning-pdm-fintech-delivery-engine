@@ -1,6 +1,6 @@
 name: PDM Publish GitHub Pages
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # Publishes the static-exported frontend to GitHub Pages so release-pipeline's
 # post-deploy verify step has a live URL to curl (DEPLOY_VERIFY_URL). The
 # `github-pages` environment restricts to the develop branch (branch policy).
