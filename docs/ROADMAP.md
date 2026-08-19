@@ -21,7 +21,7 @@ Turn this reference repo from a **harness + placeholders** into a **real, exerci
 - **Dependency automation**: Dependabot configured for GitHub Actions (root) + npm (pointed at `frontend/` since Phase 6 moved the app there), both targeting `develop`; version bumps are mirrored into canonical workflows by hand after merge.
 - **Toolchain**: actionlint 1.7.12 (Homebrew), `gh` CLI, Node 22.
 - **Branches**: `main`, `develop`, feature branches.
-- **Docs**: architecture map, native runbook, agent guide, and ADR log tracked under `docs/`.
+- **Docs**: architecture map, native runbook, agent guide, and ADR log live on the wiki (canonical since the 2026-08-18 migration; ADR 0012), with a committed mirror under `docs/`.
 - **Known gaps**: none open in the engine (Phases 0–18 complete). Phase 7 added delivery telemetry & audit trail atop GitHub's native records; Phases 8–11 delivered the maiden voyage, product surface, release-train/failure telemetry, and the release-train simulator; Phases 12–14 operated train 2 and validated the copy-kit; Phases 15–18 reconciled the branch topology (ADR 0011), flew train 2 with documented slip decisions (release `v0.3.0`), proved the copy-kit via the in-repo consumer-path rehearsal (`copykit-smoke.yml`), and closed the chapter with the final truthing readout (P18). **Phases 19–21 (README Enhancement & Wiki Reconciliation) planned 2026-08-19** — milestones #17–#19 + planning issues #148–#155 created; see the wiki page `Plan-Phases-19-21-README-Wiki-Enhancement`.
 
 ## 3. Parallelization Strategy

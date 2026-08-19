@@ -15,5 +15,6 @@ Architecture Decision Records (ADRs) for the PDM delivery engine. Each entry rec
 | [0009](0009-release-train-cadence.md) | Fixed-cadence release-train calendar with a native-record on-time signal | Accepted |
 | [0010](0010-simulations-are-labeled-artifacts.md) | Simulations are labeled artifacts, never native delivery records | Accepted |
 | [0011](0011-branch-topology-restore-develop.md) | Restore `develop` as the integration and default branch | Accepted |
+| [0012](0012-docs-home-wiki-canonical.md) | The wiki is the canonical docs home; `docs/` is the committed mirror | Accepted |
 
 Superseded or rejected decisions are removed from the index but the record itself may note the supersession (see [0006](0006-run-artifact-persistence.md)).
