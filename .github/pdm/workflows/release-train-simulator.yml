@@ -1,6 +1,6 @@
 name: PDM Release Train Simulator
 
-# Docs: docs/plans/release-train-simulator.md (Phases 11-13) + ADR 0010.
+# Docs: the wiki plan page Plan-Release-Train-Simulator (Phases 11-13) + ADR 0010.
 # Runs the deterministic release-train simulation headlessly and uploads a
 # clearly-labeled report artifact. The job creates NO deployments, releases,
 # PRs, or issues — the artifact is its only output, so delivery-telemetry

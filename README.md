@@ -40,7 +40,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 
 ## System Flow
 
-A high-level view of how the engine flows from local edits through the PR gates, the release pipeline, and telemetry. For the detailed workflow map (triggers, jobs, permissions, artifacts), see the [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) wiki page (or the tracked mirror `docs/architecture.md`).
+A high-level view of how the engine flows from local edits through the PR gates, the release pipeline, and telemetry. For the detailed workflow map (triggers, jobs, permissions, artifacts), see the [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) wiki page.
 
 ```mermaid
 flowchart LR
@@ -159,8 +159,4 @@ The **project wiki** is the canonical, always-current docs home (since the 2026-
 - [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
 - [Local-Runbook](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Local-Runbook) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
 - [Agent-Guide](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Agent-Guide) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
-- [Decision-Log](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Decision-Log) — ADR decision log for the delivery engine (ADR 0001–0011).
-
-The repo also tracks a **committed mirror under `docs/`** (kept in sync with the wiki) for offline/PR review:
-
-- [docs/architecture.md](docs/architecture.md) · [docs/local-runbook.md](docs/local-runbook.md) · [docs/agents-guide.md](docs/agents-guide.md) · [docs/decisions/](docs/decisions/) · [docs/ROADMAP.md](docs/ROADMAP.md)
+- [Decision-Log](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Decision-Log) — ADR decision log for the delivery engine (ADR 0001–0013).

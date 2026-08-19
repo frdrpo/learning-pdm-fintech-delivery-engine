@@ -1,6 +1,6 @@
 name: PDM Release Deployment Pipeline
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # Dry-run (default) writes deployment records; dry_run:false or push-to-main calls the Deployment API.
 
 on:

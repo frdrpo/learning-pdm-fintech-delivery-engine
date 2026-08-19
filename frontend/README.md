@@ -91,7 +91,7 @@ pnpm start  # serve the built export locally
 ## Documentation
 
 - [Repository README](../README.md)
-- [Architecture map](../docs/architecture.md) — workflow map and env promotion chain
-- [Local runbook](../docs/local-runbook.md) — hands-on workflow loop
-- [Agent guide](../docs/agents-guide.md) — contributor and agent guidance
-- [Decision log](../docs/decisions/README.md) — ADRs (0001–0010)
+- [Architecture map](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) — workflow map and env promotion chain
+- [Local runbook](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Local-Runbook) — hands-on workflow loop
+- [Agent guide](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Agent-Guide) — contributor and agent guidance
+- [Decision log](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Decision-Log) — ADRs (0001–0013)

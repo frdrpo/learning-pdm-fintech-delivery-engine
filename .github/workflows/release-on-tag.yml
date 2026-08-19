@@ -1,6 +1,6 @@
 name: PDM Release on Tag
 
-# Docs: architecture map, ADRs, and runbook live in docs/ (see docs/architecture.md).
+# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
 # Releases are gated on a closed GitHub milestone titled v<version> and are
 # self-contained: GITHUB_TOKEN-created tags/commits never spawn a new workflow
 # run, so the dispatch path does the whole release (bump + build + createRelease)
