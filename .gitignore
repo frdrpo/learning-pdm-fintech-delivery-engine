@@ -8,7 +8,13 @@ node_modules/
 .github/pdm/reports/
 .github/pdm/releases/
 
-AGENTS.md
+# Local opencode runtime config (model pins, per-machine); the canonical
+# scrubbed fleet lives in agents/ (ADR 0015). Copy agents/opencode.example.json
+# to opencode.json if you want a tracked-free local runtime.
+opencode.json
+
+# Local opencode runtime installs/deps — never repo content (ADR 0015);
+# the canonical fleet is agents/, installed locally via `make fleet-sync`.
 .opencode
 
 # Throwaway wiki clone used for wiki-only edits (ADR 0013)

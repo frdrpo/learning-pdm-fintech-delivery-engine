@@ -31,3 +31,28 @@ Open a PR to `main` and GitHub runs the three PR workflows natively; the release
 - **`make sync` must be run before committing**: GitHub only executes workflows from `.github/workflows/`, and `make lint` fails on drift between the two trees.
 - **The frontend stack is pnpm, run in `frontend/`.** The quality gate sets up pnpm with `pnpm/action-setup@v6` (version pinned to the lockfile's `packageManager` field) *before* `actions/setup-node` (which needs `pnpm` present for its `cache: pnpm`). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
 - On Apple Silicon, nothing here needs a container; `actionlint` runs natively via Homebrew.
+
+## The AI agent fleet (canonical, ADR 0015)
+
+This repo ships as "powered by an AI agent fleet." The fleet is **canonical repo content** in `agents/` (five scrubbed, model-pin-free definitions: `pm`, `docs`, `software-engineer`, `junior-software-engineer`, `docs-reader`), installed into a local opencode runtime with `make fleet-sync`. Runtime config (providers/models, keys, local-only permissions) stays local: `.opencode/` and `opencode.json` are gitignored, and `agents/opencode.example.json` is the scrubbed template (`{env:...}` overridable models). See `agents/README.md` and [[Agent-Guide]] on the wiki.
+
+### Fleet operating loop (every agent task)
+
+1. **Wiki-first read** — fetch the freshest state from the wiki (ROADMAP, Agent-Guide, Architecture, Decision-Log, Release-Train-Calendar, plan pages) before acting; never rely on a local cache.
+2. **Live-repo verification** — confirm upstream state against the live repo (gh API, `git log`, working tree); mark anything not re-verified `needs-verification`.
+3. **Evidence artifacts** — record each step's output as a labeled artifact (`kind: "agent-advisory"` for Phase 27 advisories; never a native delivery record — ADR 0010 / ADR 0016).
+4. **Telemetry-honesty** — `insufficient-data` when evidence is missing, never invented; no failure-classifier words (`rollback`/`incident`/`outage`/`hotfix`/`regression`) in issue/PR titles.
+
+### Task-card format (agent-executed delivery work)
+
+Every agent-executed task card carries exactly: **Goal** (what delivery outcome), **Evidence** (which labeled artifacts/SHAs prove it), **Acceptance criteria** (gates: `quality-gate`, `risk-health-check`, `compliance-guardrail`, `delivery-telemetry`, `copykit-smoke`). Record the card + evidence where the plan says; the rehearsal itself never creates native delivery records (ADR 0010, ADR 0016).
+
+### Roles, permissions and limits
+
+- `pm` (subagent) — ROADMAP-style plans + GitHub materialization; advisory only, never commits directly.
+- `docs` (primary) — wiki sync; drafts only until the user confirms a push.
+- `software-engineer` (primary) — TDD/OOP/SOLID/Clean Code implementation after delegating research to `junior-software-engineer`.
+- `junior-software-engineer` (subagent) — read-only review/proposals: `edit`/`bash` denied.
+- `docs-reader` (subagent) — read-only bulk-file research: `edit`/`bash` denied.
+
+Agent outputs never gate a merge; the deterministic quality gates and the P24 delivery-advisor remain the decision layer (ADR 0016).

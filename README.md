@@ -37,6 +37,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
+- `agents/` - The canonical AI agent fleet (ADR 0015): five scrubbed, model-pin-free agent definitions (`pm`, `docs`, `software-engineer`, `junior-software-engineer`, `docs-reader`) installed into a local opencode runtime with `make fleet-sync`. Runtime config (providers/models, keys) stays local — `.opencode/` and `opencode.json` are gitignored; `agents/opencode.example.json` is the scrubbed template (`{env:...}` overridable).
 - `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests, plus a `/delivery` route rendering the live delivery-health snapshot (DORA metrics, release-train status, audit trail). This is the application the delivery gates exercise.
 
 ## System Flow
@@ -115,6 +116,7 @@ The `Makefile` is the local operator surface for the engine. All targets run nat
 | `make sync` | Mirror `.github/pdm/workflows/*.yml` (canonical) → `.github/workflows/` (GitHub executes only there) |
 | `make lint` | actionlint on canonical + execution copies, then a drift check that fails if the two trees differ |
 | `make sync-deps` | Adopt dependabot version bumps from `.github/workflows/` back into canonical (then `make sync`) |
+| `make fleet-sync` | Install the canonical agent fleet (`agents/`) into the local runtime (`.opencode/agent/`, ADR 0015) |
 | `make test-frontend` | CI-parity frontend suite: install + lint + typecheck + test + build (pnpm) |
 | `make test-gh` | Push current branch + open/update a PR to `main`, then `gh pr checks --watch` the native gate runs |
 | `make test-consumer-path` | P17 copy-kit rehearsal: execute kit §1→§8 in a throwaway consumer workspace (`scripts/consumer-smoke.mjs`) |
