@@ -2,10 +2,6 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "{env:OPENCODE_MODEL}",
   "small_model": "{env:OPENCODE_SMALL_MODEL}",
-  "disabled_providers": [
-    "github-copilot",
-    "github-copilot-enterprise"
-  ],
   "permission": {
     "bash": {
       "git *": "allow",

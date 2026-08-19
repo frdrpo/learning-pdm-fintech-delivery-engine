@@ -1,7 +1,8 @@
 name: PDM Compliance & Security Guardrail
 
-# Docs: architecture map, ADRs, and runbook live on the wiki (see the Architecture page).
-# Scans the PR base..head with trufflehog and posts a pass/fail comment on PR runs.
+# Template: shift-left secrets/compliance scanning. Scans the PR base..head with
+# trufflehog and posts a pass/fail comment on PR runs (guarded on
+# context.payload.pull_request.number so non-PR runs never hit the API).
 
 on:
   pull_request:
@@ -38,13 +39,10 @@ jobs:
         with:
           script: |
             const outcome = "${{ job.status }}";
-            let statusBody = "";
-
-            if (outcome === "success") {
-              statusBody = "### 🛡️ PDM Compliance Agent\n✅ **Passed:** No hardcoded secrets, data privacy violations, or regulatory compliance flags detected.";
-            } else {
-              statusBody = "### 🛡️ PDM Compliance Agent\n❌ **Blocked:** Potential security or compliance violation detected in code changes. Please review logs and remediate before merging.";
-            }
+            const statusBody =
+              outcome === "success"
+                ? "### 🛡️ PDM Compliance Agent\n✅ **Passed:** No hardcoded secrets, data privacy violations, or regulatory compliance flags detected."
+                : "### 🛡️ PDM Compliance Agent\n❌ **Blocked:** Potential security or compliance violation detected in code changes. Please review logs and remediate before merging.";
 
             if (context.payload.pull_request?.number) {
               await github.rest.issues.createComment({

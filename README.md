@@ -14,8 +14,9 @@ The delivery engine is **live and operating at cadence** — Phases 0–21 compl
 - **Releases**: `v0.1.0`, `v0.2.0`, `v0.3.0` shipped via the milestone-gated `release-on-tag` pipeline. Train 2 (departs 08-31, cutoff 08-28) is pending — `v0.3.0` published early, inside train 1's window, so the on-time signal honestly stays 1/1 until a release publishes inside train 2's window `[08-31, 09-14)` (ADR 0009).
 - **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). The P21 close-out telemetry run (32205889156) confirmed the same numbers unchanged. Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
 - **Release train**: 14-day cadence (ADR 0009); train 3 departs **09-14** (cutoff 09-11), train 4 departs 09-28 — see the [Release Train Calendar](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Release-Train-Calendar).
-- **Branch topology**: `develop` (default, integration) + `main` (protected; requires the `PDM Quality Gate (Status Check)`). Feature/track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
+- **Branch topology**: `develop` (default, integration) + `main` (protected; requires the `PDM Quality Gate (Status Check)`). Feature/track branches fork from `develop` and land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `develop`. `main` only receives version-release PRs (opened by the `release-on-tag` dispatch), which run the real deployment pipeline when merged.
 - **Product surface**: the frontend now renders the live delivery telemetry at [`/delivery`](https://frdrpo.github.io/learning-pdm-fintech-delivery-engine/delivery/) — DORA metric cards, the release-train status panel (ADR 0009 window logic), and the audit trail — from a committed, versioned snapshot of the `delivery-telemetry` export (honest `insufficient-data` empty states, never invented numbers).
+- **Examples & templates** (Issue #184): the [`examples/`](examples/) tree ships three reference implementations for adopting the PDM framework and AI agent patterns — a scrubbed agent fleet (`fintech-agent-runner/`), actionlint-valid workflow templates (`pdm-workflow-templates/`), and a mocked `node:test` CI scaffold (`agent-skills-demo/`). Validated offline by `make test-examples` (also run in the quality gate's `workflow-lint` job); see the [wiki Examples-and-Templates](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Examples-and-Templates) page.
 
 ## Repository Structure
 
@@ -30,7 +31,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
   - `release-pipeline.yml` - Promotes builds through development/staging/production environments and records dry-run deployments.
   - `delivery-telemetry.yml` - Exports the GitHub-native delivery audit trail and DORA-style telemetry as run artifacts (weekly + on demand).
   - `security-rescan.yml` - Weekly + on-demand gitleaks/OSV re-scan; uploads a report artifact and files an issue on blocking schedule findings.
-  - `release-on-tag.yml` - Milestone-gated releases: `workflow_dispatch` with a `version` (or a `v*` tag push) cuts the release off `develop` — requires a closed `v<version>` milestone, bumps `frontend/package.json`, and creates the GitHub Release in one self-contained run.
+  - `release-on-tag.yml` - Milestone-gated releases: `workflow_dispatch` with a `version` cuts the release — requires a closed `v<version>` milestone, bumps `frontend/package.json` on `develop`, and opens the release PR `develop → main`. Merging it runs the real `release-pipeline`; a `v*` tag push on `main` publishes the GitHub Release (still milestone-gated).
   - `publish-pages.yml` - Publishes the static-exported frontend to GitHub Pages on every push to `develop` (the live `DEPLOY_VERIFY_URL` target).
   - `release-train-simulator.yml` - Runs the deterministic release-train model headlessly (`workflow_dispatch` only); labeled artifacts, never native records (ADR 0010).
   - `copykit-smoke.yml` - P17 copy-kit rehearsal: replays the engine copy-kit (§1→§8) in a throwaway consumer workspace on a fresh runner (`workflow_dispatch` only; local equivalent `make test-consumer-path`).
@@ -38,6 +39,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
 - `agents/` - The canonical AI agent fleet (ADR 0015): five scrubbed, model-pin-free agent definitions (`pm`, `docs`, `software-engineer`, `junior-software-engineer`, `docs-reader`) installed into a local opencode runtime with `make fleet-sync`. Runtime config (providers/models, keys) stays local — `.opencode/` and `opencode.json` are gitignored; `agents/opencode.example.json` is the scrubbed template (`{env:...}` overridable).
+- `examples/` - Reference implementations and workflow templates for adopting the PDM framework and AI agent patterns (Issue #184): `fintech-agent-runner/` (scrubbed agent fleet + `fleet-sync`), `pdm-workflow-templates/` (actionlint-valid quality-gate/compliance/agent-runner templates), and `agent-skills-demo/` (skill-resolution demo + mocked `node:test` CI scaffold). Validated offline by `make test-examples`, wired into the quality gate.
 - `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests, plus a `/delivery` route rendering the live delivery-health snapshot (DORA metrics, release-train status, audit trail). This is the application the delivery gates exercise.
 
 ## System Flow
@@ -52,9 +54,9 @@ flowchart LR
         C --> D["Push branch"]
     end
 
-    D --> P["Open PR to main"]
+    D --> P["Open PR to develop"]
 
-    subgraph Gates["PR gates (every PR to main)"]
+    subgraph Gates["PR gates (every PR to develop + main)"]
         RH["risk-health-check — gitleaks + OSV + code health + AI risk review"]
         CG["compliance-guardrail — trufflehog base..head"]
         QG["quality-gate (REQUIRED) — actionlint + lint/typecheck/test/build"]
@@ -68,16 +70,23 @@ flowchart LR
     CG --> CG1["PR comment (pass/fail)"]
     QG --> QG1["PR comment / gate-report artifact"]
 
-    RH --> M["Merge to main (only when all gates pass)"]
-    CG --> M
-    QG --> M
+    RH --> DEV["Merge to develop"]
+    CG --> DEV
+    QG --> DEV
 
+    subgraph Release["Version release (on demand)"]
+        CUT["release-on-tag dispatch (version, milestone-gated)"] --> RPR["PR develop → main"]
+        RPR --> QG
+        RPR --> M["Merge to main"]
+        M --> RT["Tag v<version> on main → GitHub Release"]
+    end
+
+    DEV -.->|on demand| CUT
     M --> RP["release-pipeline — build → development → staging → production"]
     RP -->|dry_run: true| RP1["Deploy-record artifacts (dry-run)"]
     RP -->|dry_run: false / push| RP2["GitHub Deployment API (real deployments)"]
 
-    M -.->|push to develop| PP["publish-pages → GitHub Pages (live verify target)"]
-    M -.->|dispatch v* · milestone-gated| RT["release-on-tag → GitHub Release"]
+    DEV -.->|push to develop| PP["publish-pages → GitHub Pages (live verify target)"]
 
     subgraph Scheduled["Scheduled + on demand"]
         SR["security-rescan — weekly Mon 02:00 UTC"]
@@ -94,11 +103,11 @@ flowchart LR
 
 Notes on the flow:
 
-- `quality-gate` is the single required branch-protection check on `main` — a PR merges only when all three PR workflows pass.
+- `quality-gate` is the single required branch-protection check on `main` — a release PR merges only when all three PR workflows pass. The same three PR workflows run on every PR to `develop`.
 - On PR runs, workflows post comments to the PR; on non-PR (`workflow_dispatch`) runs they upload reports and dry-run deployment records as run artifacts instead.
 - The canonical source of truth is `.github/pdm/workflows/`; `.github/workflows/` holds byte-identical execution copies kept in sync via `make sync`.
 - A `push` to `main` always runs the release pipeline for real (`dry_run: false`); `workflow_dispatch` defaults to `dry_run: true`. Staging and production require manual approval.
-- Releases are cut from `develop` via `release-on-tag` `workflow_dispatch` (version input): gated on a closed milestone `v<version>`, bumps `frontend/package.json` on `develop`, and creates the GitHub Release in the same run (`GITHUB_TOKEN`-triggered events never spawn a new run, so no tag-push chaining). Manual `v*` tag pushes still publish but pass the same milestone gate.
+- Version releases are PRs to `main`, cut by `release-on-tag` `workflow_dispatch` (version input): gated on a closed milestone `v<version>`, it bumps `frontend/package.json` on `develop` and opens the release PR `develop → main`. Merging the PR pushes `main` (running `release-pipeline` for real); tagging `main` with `v<version>` publishes the GitHub Release (tag pushes still pass the same milestone gate).
 
 ## Prerequisites
 
@@ -118,8 +127,9 @@ The `Makefile` is the local operator surface for the engine. All targets run nat
 | `make sync-deps` | Adopt dependabot version bumps from `.github/workflows/` back into canonical (then `make sync`) |
 | `make fleet-sync` | Install the canonical agent fleet (`agents/`) into the local runtime (`.opencode/agent/`, ADR 0015) |
 | `make test-frontend` | CI-parity frontend suite: install + lint + typecheck + test + build (pnpm) |
-| `make test-gh` | Push current branch + open/update a PR to `main`, then `gh pr checks --watch` the native gate runs |
+| `make test-gh` | Push current branch + open/update a PR to `develop`, then `gh pr checks --watch` the native gate runs |
 | `make test-consumer-path` | P17 copy-kit rehearsal: execute kit §1→§8 in a throwaway consumer workspace (`scripts/consumer-smoke.mjs`) |
+| `make test-examples` | Issue #184 examples validation: READMEs + structure, agent scrub-rules, workflow-template actionlint + artifact guards, mocked contract test (`scripts/examples-test.mjs`) |
 | `make topology-check` | Verify the documented repo topology against the live repo (`scripts/wire-topology.mjs --check`) |
 | `make topology-apply` | Converge the topology (branch protection, environments, Pages, `DEPLOY_VERIFY_URL`) |
 
@@ -132,13 +142,29 @@ Workflows are verified by running them on GitHub — no local Docker/`act` harne
    make sync   # copy canonical workflows to .github/workflows/
    make lint   # actionlint + drift check against the copies
    ```
-2. Open a PR to `main` (or `make test-gh` to push + open/update the PR for the current branch). GitHub runs the PDM workflows natively:
-   - `quality-gate` (actionlint + lint/typecheck/test/build) — required check
+2. Open a PR to `develop` (or `make test-gh` to push + open/update the PR for the current branch). GitHub runs the PDM workflows natively:
+   - `quality-gate` (actionlint + lint/typecheck/test/build) — the required check on `main` (release PRs); runs as a gate check on `develop` PRs
    - `risk-health-check` (gitleaks + OSV + code health) — posts a PR comment
    - `compliance-guardrail` (trufflehog) — posts a PR comment
 3. For non-PR runs (`workflow_dispatch`), reports and dry-run deployment records are uploaded as run artifacts instead of PR comments — download them from the run's "Artifacts" section.
 
-`push` to `main` also triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
+`push` to `main` (a merge of a release PR cut by `release-on-tag` dispatch, or any other merge) triggers `release-pipeline` (real `createDeployment`); `workflow_dispatch` defaults to `dry_run: true` so manual runs skip the Deployment API.
+
+## Examples & Templates (Issue #184)
+
+The `examples/` tree ships reference implementations and workflow templates for adopting the PDM framework and AI agent patterns:
+
+- `examples/fintech-agent-runner/` — a minimal opencode agent fleet (`pm`, `delivery-engineer`, `compliance-reviewer`) with scrub-safe definitions, `fleet-sync`, and a local `node --test` hygiene test (ADR 0015 pattern).
+- `examples/pdm-workflow-templates/` — ready-to-copy actionlint-valid workflows: `quality-gate.yml`, `compliance-guardrail.yml`, `agent-runner.yml` (dispatch-only).
+- `examples/agent-skills-demo/` — skill-resolution demo + a dependency-free mocked `node:test` CI scaffold.
+
+Validate them offline, or let the quality gate do it on every PR:
+
+```bash
+make test-examples   # README/structure + fleet scrub rules + template actionlint/guards + mock contract test
+```
+
+To adopt: copy a subproject into your repo, follow its `README.md` (cp commands + renames), then run `make test-examples` and (for templates) `make sync`/`make lint`. See the [wiki Examples and Templates page](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Examples-and-Templates).
 
 ## Frontend Testing
 

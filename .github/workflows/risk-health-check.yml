@@ -6,6 +6,7 @@ name: PDM Risk & Code Health Check
 on:
   pull_request:
     branches:
+      - develop
       - main
     types:
       - opened

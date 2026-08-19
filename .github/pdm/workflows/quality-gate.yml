@@ -5,7 +5,7 @@ name: PDM Quality Gate (Status Check)
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ develop, main ]
     types: [ opened, synchronize, reopened, ready_for_review ]
   workflow_dispatch:
 
@@ -33,6 +33,12 @@ jobs:
       - name: Lint all workflows
         shell: bash
         run: ./actionlint -color -pyflakes=0
+
+      - name: Validate examples and templates (Issue #184)
+        shell: bash
+        run: |
+          export PATH="$GITHUB_WORKSPACE:$PATH"
+          node scripts/examples-test.mjs
 
   code-quality:
     name: Code Quality (lint/typecheck/test/build)
