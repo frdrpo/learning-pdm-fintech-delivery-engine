@@ -8,11 +8,11 @@ This repository serves as a reference implementation for modern Product Delivery
 
 ## Current State
 
-The delivery engine is **live and operating at cadence** — Phases 0–18 complete, no open gaps:
+The delivery engine is **live and operating at cadence** — Phases 0–21 complete, no open gaps:
 
 - **10 canonical workflows** under `.github/pdm/workflows/` (7 core PR/release gates + `publish-pages` + `release-train-simulator` + `copykit-smoke`), mirrored byte-identically to `.github/workflows/` and verified by `make lint`.
 - **Releases**: `v0.1.0`, `v0.2.0`, `v0.3.0` shipped via the milestone-gated `release-on-tag` pipeline. Train 2 (departs 08-31, cutoff 08-28) is pending — `v0.3.0` published early, inside train 1's window, so the on-time signal honestly stays 1/1 until a release publishes inside train 2's window `[08-31, 09-14)` (ADR 0009).
-- **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
+- **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). The P21 close-out telemetry run (32205889156) confirmed the same numbers unchanged. Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
 - **Release train**: 14-day cadence (ADR 0009); train 3 departs **09-14** (cutoff 09-11), train 4 departs 09-28 — see the [Release Train Calendar](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Release-Train-Calendar).
 - **Branch topology**: `develop` (default, integration) + `main` (protected; requires the `PDM Quality Gate (Status Check)`). Feature/track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
 
@@ -152,10 +152,10 @@ See the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-e
 
 ## Documentation
 
-The **project wiki** is the canonical, always-current docs home (since the 2026-08-18 docs migration):
+The **project wiki** is the canonical, always-current docs home (since the 2026-08-18 docs migration; ADR 0012; wiki-only since ADR 0013):
 
 - [Wiki Home](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Home) — start here; also [Overview](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Overview) and [Glossary](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Glossary).
-- [ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP) — full delivery-engine roadmap and phase breakdown (current: Phases 0–18 complete, 19–21 planned).
+- [ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP) — full delivery-engine roadmap and phase breakdown (current: Phases 0–21 complete).
 - [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
 - [Local-Runbook](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Local-Runbook) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
 - [Agent-Guide](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Agent-Guide) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
