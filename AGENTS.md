@@ -13,10 +13,10 @@ Canonical workflows live in `.github/pdm/workflows/`; `.github/workflows/` holds
 ```sh
 make lint          # actionlint on canonical + execution copies, then drift check
 make test-frontend # native frontend suite: install + lint + typecheck + test + build
-make test-gh       # push current branch + open/update a PR to main, then gh pr checks --watch
+make test-gh       # push current branch + open/update a PR to develop, then gh pr checks --watch
 ```
 
-Open a PR to `main` and GitHub runs the three PR workflows natively; the release pipeline is exercised via `workflow_dispatch` (default `dry_run: true`). On PR runs the workflows post comments; on non-PR (`workflow_dispatch`) runs they upload report/deployment records as run artifacts instead.
+Open a PR to `develop` and GitHub runs the three PR workflows natively (they also gate release PRs to `main`); the release pipeline is exercised via `workflow_dispatch` (default `dry_run: true`). On PR runs the workflows post comments; on non-PR (`workflow_dispatch`) runs they upload report/deployment records as run artifacts instead. `main` only receives version-release PRs (cut by the `release-on-tag` dispatch).
 
 ## Gotchas (hard-earned)
 
@@ -25,7 +25,7 @@ Open a PR to `main` and GitHub runs the three PR workflows natively; the release
 - **github-script v7** already injects `context` and `github`; never redeclare `const { context } = …`. Comment-posting steps are guarded with `context.payload.pull_request?.number` so non-PR runs don't hit the API.
 - **Cross-job files don't persist on GitHub** (each job gets a fresh workspace). Each workflow that writes reports/records must upload them as run artifacts from the same job that wrote them; artifacts use `if: !github.event.pull_request` (or `real_deploy == 'false'`) guards.
 - **Workflows run on every PR synchronize** and each posts a comment — expect a comment per push on active PRs.
-- **`GITHUB_TOKEN`-triggered events never chain workflow runs.** Commits/tags pushed by `GITHUB_TOKEN` don't re-trigger `push` (or `push: tags`) workflows — only `workflow_dispatch`/`repository_dispatch` can be triggered that way. `release-on-tag` is therefore self-contained: its dispatch path does the whole release (milestone gate → `develop` bump → `createRelease`) instead of pushing a tag and relying on a second run.
+- **`GITHUB_TOKEN`-triggered events never chain workflow runs.** Commits/tags pushed by `GITHUB_TOKEN` don't re-trigger `push` (or `push: tags`) workflows — only `workflow_dispatch`/`repository_dispatch` can be triggered that way. `release-on-tag` is therefore two explicit steps instead of chaining: its dispatch path cuts the release (milestone gate → `develop` bump → open the release PR `develop → main`), and publishing (tag `main` with `v<version>` → `createRelease`) only happens after a human merges that PR and pushes the tag.
 - **`gh` CLI in a workflow requires `GH_TOKEN` explicitly.** The runner's `gh` refuses to use `GITHUB_TOKEN` automatically ("set the GH_TOKEN environment variable"). Any step calling `gh` must pass `env: GH_TOKEN: ${{ github.token }}` — the repo's other workflows use `github-script` (token injected), so this only bites new direct-`gh` steps.
 - **`main` merge blocks can be silent `repo-settings` misconfiguration.** With no `CODEOWNERS`, `require_code_owner_reviews` makes the only "owner" the PR author (unapprovable), and `lock_branch` makes `main` fully read-only — either permanently blocks every PR merge even with green gates. Diagnose with `gh api .../branches/main/protection`; fix by `PUT`ting the full `.../protection` body (`lock_branch: false`, `require_code_owner_reviews: false`, `required_status_checks.contexts: ["PDM Quality Gate (Status Check)"]`).
 - **`make sync` must be run before committing**: GitHub only executes workflows from `.github/workflows/`, and `make lint` fails on drift between the two trees.

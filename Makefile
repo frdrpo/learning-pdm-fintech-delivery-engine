@@ -49,14 +49,15 @@ lint:
 	fi
 
 # Verify the PDM workflows natively on GitHub: push the current branch and open
-# (or update) a PR to main so the pull_request triggers execute, then surface
-# the run status. Requires the gh CLI (gh auth login).
+# (or update) a PR to develop so the pull_request triggers execute, then surface
+# the run status. Requires the gh CLI (gh auth login). main only receives PRs
+# for version releases (cut by release-on-tag dispatch).
 test-gh:
 	@BRANCH=$$(git symbolic-ref --short HEAD); \
-	echo "Pushing $$BRANCH and opening a PR to main (PDM workflows will run natively)..."; \
+	echo "Pushing $$BRANCH and opening a PR to develop (PDM workflows will run natively)..."; \
 	git push -u origin $$BRANCH; \
 	if ! gh pr view $$BRANCH --json number --jq .number >/dev/null 2>&1; then \
-		gh pr create --base main --head $$BRANCH \
+		gh pr create --base develop --head $$BRANCH \
 			--title "PDM workflow run ($$BRANCH)" \
 			--body "Opened by \`make test-gh\` to run the PDM quality gates natively on GitHub."; \
 	fi; \
