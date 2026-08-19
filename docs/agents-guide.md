@@ -8,6 +8,10 @@ A PDM (Product Delivery Management) reference repo — a Next.js frontend plus G
 
 The engine is the GitHub Actions setup under `.github/`. Application code (a Next.js 16 + TypeScript + Tailwind v4 frontend with Vitest tests in `frontend/`) exists only so the quality gate and release build have real work.
 
+## Where the docs live
+
+Project documentation (architecture, runbook, agent guide, ROADMAP, ADR log, plans) is canonical on the **[project wiki](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Home)** (since the 2026-08-18 docs migration; ADR 0012). The repo also tracks a **committed mirror under `docs/`** that is kept in sync for offline and PR review — the wiki and `docs/` must never diverge in content (only link syntax differs: wiki `[[links]]` vs relative paths). Edit wiki pages in the wiki repo (or the `docs/` mirror via a PR) and keep the wiki, `docs/`, the README shortcuts, and these docs pointers consistent.
+
 ## Repository layout
 
 - `.github/pdm/workflows/` — canonical workflow definitions (source of truth).
@@ -15,7 +19,8 @@ The engine is the GitHub Actions setup under `.github/`. Application code (a Nex
 - `.github/pdm/{reports,deployments,releases}/` — run-artifact staging dirs written by workflows; never committed.
 - `scripts/` — Node helpers used by workflows (`risk-review.mjs`, `delivery-telemetry.mjs`).
 - `frontend/` — the Next.js application the delivery gates exercise (pnpm-managed).
-- `docs/` — architecture, native runbook, agent guide, ROADMAP, and the ADR decision log.
+- the wiki — canonical docs home: architecture, native runbook, agent guide, ROADMAP, and the ADR decision log (ADR 0012).
+- `docs/` — the committed mirror of the wiki, kept in sync for offline and PR review (ADR 0012).
 - `Makefile` — `sync`, `lint`, `test-frontend`, `test-gh`, `test-consumer-path`, `topology-check`, `topology-apply` targets.
 
 ## GitHub native workflow testing (the main task in this repo)
@@ -38,6 +43,9 @@ Edit only `.github/pdm/workflows/` and re-sync. Open a PR to `main` and GitHub r
 - **github-script v7** already injects `context` and `github`; never redeclare `const { context } = …`. Comment-posting steps are guarded with `context.payload.pull_request?.number` so non-PR runs don't hit the API.
 - **Cross-job files don't persist on GitHub** (each job gets a fresh workspace). Each workflow that writes reports/records must upload them as run artifacts from the same job that wrote them; artifacts use `if: !github.event.pull_request` (or `real_deploy == 'false'`) guards.
 - **Workflows run on every PR synchronize** and each posts a comment — expect a comment per push on active PRs.
+- **`GITHUB_TOKEN`-triggered events never chain workflow runs.** Commits/tags pushed by `GITHUB_TOKEN` don't re-trigger `push` (or `push: tags`) workflows — only `workflow_dispatch`/`repository_dispatch` can be triggered that way. `release-on-tag` is therefore self-contained: its dispatch path does the whole release (milestone gate → `develop` bump → `createRelease`) instead of pushing a tag and relying on a second run.
+- **`gh` CLI in a workflow requires `GH_TOKEN` explicitly.** The runner's `gh` refuses to use `GITHUB_TOKEN` automatically ("set the GH_TOKEN environment variable"). Any step calling `gh` must pass `env: GH_TOKEN: ${{ github.token }}` — the repo's other workflows use `github-script` (token injected), so this only bites new direct-`gh` steps.
+- **`main` merge blocks can be silent `repo-settings` misconfiguration.** With no `CODEOWNERS`, `require_code_owner_reviews` makes the only "owner" the PR author (unapprovable), and `lock_branch` makes `main` fully read-only — either permanently blocks every PR merge even with green gates. Diagnose with `gh api .../branches/main/protection`; fix by `PUT`ting the full `.../protection` body (`lock_branch: false`, `require_code_owner_reviews: false`, `required_status_checks.contexts: ["PDM Quality Gate (Status Check)"]`).
 - **`make sync` must be run before committing**: GitHub only executes workflows from `.github/workflows/`, and `make lint` fails on drift between the two trees.
 - **The frontend stack is pnpm, run in `frontend/`.** The quality gate sets up pnpm with `pnpm/action-setup@v6` (version pinned to the lockfile's `packageManager` field) *before* `actions/setup-node` (which needs `pnpm` present for its `cache: pnpm`). Local Node ≥25 ships no corepack, so `make test-frontend` uses `pnpm` directly — `brew install pnpm` if missing.
 - **On Apple Silicon, nothing here needs a container**; `actionlint` runs natively via Homebrew.
