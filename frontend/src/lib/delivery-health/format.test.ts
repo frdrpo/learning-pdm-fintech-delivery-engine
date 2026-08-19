@@ -22,6 +22,17 @@ describe("formatHours", () => {
   it("renders zero as 0m", () => {
     expect(formatHours(0)).toBe("0m");
   });
+
+  it("clamps negative values to 0m", () => {
+    expect(formatHours(-1)).toBe("0m");
+    expect(formatHours(-0.5)).toBe("0m");
+  });
+
+  it("clamps non-finite values to 0m", () => {
+    expect(formatHours(NaN)).toBe("0m");
+    expect(formatHours(Infinity)).toBe("0m");
+    expect(formatHours(-Infinity)).toBe("0m");
+  });
 });
 
 describe("formatPercent", () => {
@@ -35,6 +46,12 @@ describe("formatPercent", () => {
 
   it("renders zero percent", () => {
     expect(formatPercent(0)).toBe("0.0%");
+  });
+
+  it("renders non-finite input as an em dash", () => {
+    expect(formatPercent(NaN)).toBe("—");
+    expect(formatPercent(Infinity)).toBe("—");
+    expect(formatPercent(-Infinity)).toBe("—");
   });
 });
 
