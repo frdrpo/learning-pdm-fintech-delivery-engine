@@ -1,5 +1,6 @@
 import { FeatureCard } from "@/components/feature-card";
 import { Hero } from "@/components/hero";
+import { SiteFooter } from "@/components/site-footer";
 import { FEATURES } from "@/lib/features";
 
 export default function Home() {
@@ -21,9 +22,9 @@ export default function Home() {
           ))}
         </div>
       </main>
-      <footer className="border-t border-white/10 py-10 text-center text-sm text-slate-500">
+      <SiteFooter>
         PDM reference implementation — AI-Augmented Fintech Delivery Engine
-      </footer>
+      </SiteFooter>
     </>
   );
 }

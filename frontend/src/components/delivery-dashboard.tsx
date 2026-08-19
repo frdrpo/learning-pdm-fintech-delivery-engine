@@ -8,6 +8,8 @@ import {
   type TrainReadiness,
   type TrainReadinessInput,
 } from "@/lib/delivery";
+import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 const READINESS_LABEL: Record<TrainReadiness, string> = {
   "on-schedule": "On schedule",
@@ -19,6 +21,12 @@ const GATE_LABEL: Record<GateState, string> = {
   pass: "Pass",
   fail: "Fail",
   pending: "Pending",
+};
+
+const GATE_TONE: Record<GateState, BadgeTone> = {
+  pass: "green",
+  fail: "rose",
+  pending: "amber",
 };
 
 type DeliveryDashboardProps = {
@@ -34,18 +42,16 @@ export function DeliveryDashboard({ gates, train }: DeliveryDashboardProps) {
   return (
     <section className="w-full max-w-5xl space-y-8">
       <div className="flex items-center gap-3">
-        <h2 className="text-2xl font-semibold text-white">Delivery dashboard</h2>
-        <span
-          role="status"
-          aria-label={READINESS_LABEL[readiness]}
-          className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-300"
-        >
+        <h2 className="text-2xl font-semibold text-white">
+          Delivery dashboard
+        </h2>
+        <Badge size="md" tone="cyan" label={READINESS_LABEL[readiness]}>
           {READINESS_LABEL[readiness]}
-        </span>
+        </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <Card as="section">
           <h3 className="text-lg font-semibold text-white">
             Quality gates ({overall})
           </h3>
@@ -53,30 +59,20 @@ export function DeliveryDashboard({ gates, train }: DeliveryDashboardProps) {
             {ALL_GATES.map((name) => {
               const state = gates[name] ?? "pending";
               return (
-                <li
-                  key={name}
-                  className="flex items-center justify-between rounded-lg border border-white/10 bg-slate-900 px-4 py-2.5"
-                >
-                  <span className="text-sm text-slate-200">{name}</span>
-                  <span
-                    role="status"
-                    className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
-                      state === "pass"
-                        ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
-                        : state === "fail"
-                          ? "border-rose-400/30 bg-rose-400/10 text-rose-300"
-                          : "border-amber-400/30 bg-amber-400/10 text-amber-300"
-                    }`}
-                  >
-                    {GATE_LABEL[state]}
-                  </span>
+                <li key={name}>
+                  <Card variant="row">
+                    <span className="text-sm text-slate-200">{name}</span>
+                    <Badge size="sm" tone={GATE_TONE[state]}>
+                      {GATE_LABEL[state]}
+                    </Badge>
+                  </Card>
                 </li>
               );
             })}
           </ul>
-        </section>
+        </Card>
 
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+        <Card as="section">
           <h3 className="text-lg font-semibold text-white">Next train</h3>
           <dl className="mt-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -93,15 +89,15 @@ export function DeliveryDashboard({ gates, train }: DeliveryDashboardProps) {
             </div>
           </dl>
           {blocked.length > 0 ? (
-            <p className="mt-4 rounded-lg border border-rose-400/20 bg-rose-400/10 px-4 py-2.5 text-sm text-rose-200">
+            <Card className="mt-4 text-sm" variant="notice-rose">
               Blocked by: {blocked.join(", ")}
-            </p>
+            </Card>
           ) : (
-            <p className="mt-4 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-4 py-2.5 text-sm text-emerald-200">
+            <Card className="mt-4 text-sm" variant="notice-green">
               No blockers — features can board on time.
-            </p>
+            </Card>
           )}
-        </section>
+        </Card>
       </div>
     </section>
   );

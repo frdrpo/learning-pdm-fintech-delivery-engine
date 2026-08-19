@@ -1,4 +1,4 @@
-import type { FeatureStatus } from "@/components/feature-card";
+export type FeatureStatus = "ready" | "coming-soon";
 
 export type Feature = {
   title: string;
