@@ -6,6 +6,16 @@ A comprehensive reference implementation for modern Product Delivery Management 
 
 This repository serves as a reference implementation for modern Product Delivery Management. It demonstrates how to combine trunk-based development, automated shift-left compliance, and AI-driven risk mitigation to eliminate operational friction and ensure predictable, on-time product releases.
 
+## Current State
+
+The delivery engine is **live and operating at cadence** — Phases 0–18 complete, no open gaps:
+
+- **10 canonical workflows** under `.github/pdm/workflows/` (7 core PR/release gates + `publish-pages` + `release-train-simulator` + `copykit-smoke`), mirrored byte-identically to `.github/workflows/` and verified by `make lint`.
+- **Releases**: `v0.1.0`, `v0.2.0`, `v0.3.0` shipped via the milestone-gated `release-on-tag` pipeline. Train 2 (departs 08-31, cutoff 08-28) is pending — `v0.3.0` published early, inside train 1's window, so the on-time signal honestly stays 1/1 until a release publishes inside train 2's window `[08-31, 09-14)` (ADR 0009).
+- **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
+- **Release train**: 14-day cadence (ADR 0009); train 3 departs **09-14** (cutoff 09-11), train 4 departs 09-28 — see the [Release Train Calendar](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Release-Train-Calendar).
+- **Branch topology**: `develop` (default, integration) + `main` (protected; requires the `PDM Quality Gate (Status Check)`). Feature/track branches land via PRs to `develop`; workflow verification runs through `make test-gh` PRs to `main`.
+
 ## Repository Structure
 
 All PDM workflow and deployment material is consolidated under a single folder, `.github/pdm/`:
@@ -30,7 +40,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 
 ## System Flow
 
-A high-level view of how the engine flows from local edits through the PR gates, the release pipeline, and telemetry. For the detailed workflow map (triggers, jobs, permissions, artifacts), see `docs/architecture.md`.
+A high-level view of how the engine flows from local edits through the PR gates, the release pipeline, and telemetry. For the detailed workflow map (triggers, jobs, permissions, artifacts), see the [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) wiki page (or the tracked mirror `docs/architecture.md`).
 
 ```mermaid
 flowchart LR
@@ -71,11 +81,13 @@ flowchart LR
         SR["security-rescan — weekly Mon 02:00 UTC"]
         DT["delivery-telemetry — weekly Mon 02:30 UTC"]
         TS["release-train-simulator — workflow_dispatch only"]
+        CK["copykit-smoke — workflow_dispatch only (consumer-path rehearsal)"]
     end
 
     SR --> SR1["security-rescan-report artifact"]
     DT --> DT1["delivery-audit + delivery-telemetry artifacts"]
     TS --> TS1["release-train-simulation artifact (no native records)"]
+    CK --> CK1["consumer-path rehearsal result artifact"]
 ```
 
 Notes on the flow:
@@ -92,6 +104,21 @@ Notes on the flow:
 - The [GitHub CLI](https://cli.github.com/) (`gh auth login`) for the native PR verification loop.
 - [pnpm](https://pnpm.io/) (`brew install pnpm`) for `make test-frontend` (or corepack on Node <25).
 - Push access to the repository (workflows run on GitHub, not locally).
+
+## Makefile Targets
+
+The `Makefile` is the local operator surface for the engine. All targets run natively (no Docker required):
+
+| Target | What it does |
+|---|---|
+| `make sync` | Mirror `.github/pdm/workflows/*.yml` (canonical) → `.github/workflows/` (GitHub executes only there) |
+| `make lint` | actionlint on canonical + execution copies, then a drift check that fails if the two trees differ |
+| `make sync-deps` | Adopt dependabot version bumps from `.github/workflows/` back into canonical (then `make sync`) |
+| `make test-frontend` | CI-parity frontend suite: install + lint + typecheck + test + build (pnpm) |
+| `make test-gh` | Push current branch + open/update a PR to `main`, then `gh pr checks --watch` the native gate runs |
+| `make test-consumer-path` | P17 copy-kit rehearsal: execute kit §1→§8 in a throwaway consumer workspace (`scripts/consumer-smoke.mjs`) |
+| `make topology-check` | Verify the documented repo topology against the live repo (`scripts/wire-topology.mjs --check`) |
+| `make topology-apply` | Converge the topology (branch protection, environments, Pages, `DEPLOY_VERIFY_URL`) |
 
 ## Testing (GitHub native)
 
@@ -121,12 +148,19 @@ make test-frontend               # CI-parity: install + lint + typecheck + test 
 
 The `quality-gate` and `risk-health-check` workflows run the same suite (`pnpm install --frozen-lockfile` + lint/typecheck/test/build) against `frontend/` on every pull request.
 
-See `docs/ROADMAP.md` for the full delivery-engine roadmap and phase breakdown.
+See the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP) for the full delivery-engine roadmap and phase breakdown.
 
-## Documentation Shortcuts
+## Documentation
 
-- [docs/architecture.md](docs/architecture.md) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
-- [docs/local-runbook.md](docs/local-runbook.md) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
-- [docs/agents-guide.md](docs/agents-guide.md) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
-- [docs/decisions/](docs/decisions/) — ADR decision log for the delivery engine.
-- [docs/ROADMAP.md](docs/ROADMAP.md) — full delivery-engine roadmap and phase breakdown.
+The **project wiki** is the canonical, always-current docs home (since the 2026-08-18 docs migration):
+
+- [Wiki Home](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Home) — start here; also [Overview](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Overview) and [Glossary](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Glossary).
+- [ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP) — full delivery-engine roadmap and phase breakdown (current: Phases 0–18 complete, 19–21 planned).
+- [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
+- [Local-Runbook](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Local-Runbook) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
+- [Agent-Guide](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Agent-Guide) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
+- [Decision-Log](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Decision-Log) — ADR decision log for the delivery engine (ADR 0001–0011).
+
+The repo also tracks a **committed mirror under `docs/`** (kept in sync with the wiki) for offline/PR review:
+
+- [docs/architecture.md](docs/architecture.md) · [docs/local-runbook.md](docs/local-runbook.md) · [docs/agents-guide.md](docs/agents-guide.md) · [docs/decisions/](docs/decisions/) · [docs/ROADMAP.md](docs/ROADMAP.md)
