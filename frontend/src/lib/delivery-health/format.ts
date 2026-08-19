@@ -3,6 +3,7 @@
 // surface and the run-artifact reports agree on how values are presented.
 
 export function formatHours(hours: number): string {
+  if (!Number.isFinite(hours) || hours < 0) return "0m";
   const days = Math.floor(hours / 24);
   const remainingHours = Math.floor(hours % 24);
   const minutes = Math.round((hours - days * 24 - remainingHours) * 60);
@@ -12,6 +13,7 @@ export function formatHours(hours: number): string {
 }
 
 export function formatPercent(ratio: number): string {
+  if (!Number.isFinite(ratio)) return "—";
   return `${(ratio * 100).toFixed(1)}%`;
 }
 
