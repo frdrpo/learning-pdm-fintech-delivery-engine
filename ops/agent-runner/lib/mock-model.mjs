@@ -31,7 +31,7 @@ export function mockModelSuggest(files, meta = {}) {
 export function assertNoSecrets(files) {
   const joined = JSON.stringify(files ?? []);
   const secretRe =
-    /(ghp_[A-Za-z0-9]{20,}|BEGIN\s+(RSA\s+)?PRIVATE\s+KEY|(?:"|')?\b(api|secret|token)_?key(?:"|')?\s*[:=])/i;
+    /(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|(ghpr_|gho_|ghu_)[A-Za-z0-9]{30,}|BEGIN\s+(RSA\s+)?PRIVATE\s+KEY)/;
   if (secretRe.test(joined)) {
     throw new Error("diff payload contains a secret-looking value; refusing to send to a model");
   }

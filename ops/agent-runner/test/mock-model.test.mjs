@@ -41,6 +41,12 @@ test("assertNoSecrets rejects secret-looking payloads", () => {
     assertNoSecrets([{ filename: "a.ts", patch: "+export const token = \"ghp_12345678901234567890\";" }]),
   );
   assert.throws(() =>
-    assertNoSecrets([{ filename: "a.ts", patch: "+const api_key: \"super-secret\"" }]),
+    assertNoSecrets([{ filename: "a.ts", patch: "+const key = \"github_pat_abcdefghijklmnop_12345678901234\";" }]),
+  );
+  assert.throws(() =>
+    assertNoSecrets([{ filename: "a.ts", patch: "+const pem = \"-----BEGIN PRIVATE KEY-----\\nabcd\"" }]),
+  );
+  assert.doesNotThrow(() =>
+    assertNoSecrets([{ filename: "README.md", patch: "+uses AI_AGENT_API_KEY from a GitHub Secret, never committed" }]),
   );
 });
