@@ -157,7 +157,7 @@ Workflows are verified by running them on GitHub — no local Docker/`act` harne
 The `examples/` tree ships reference implementations and workflow templates for adopting the PDM framework and AI agent patterns:
 
 - `examples/fintech-agent-runner/` — a minimal opencode agent fleet (`pm`, `delivery-engineer`, `compliance-reviewer`) with scrub-safe definitions, `fleet-sync`, and a local `node --test` hygiene test (ADR 0015 pattern).
-- `examples/pdm-workflow-templates/` — ready-to-copy actionlint-valid workflows: `quality-gate.yml`, `compliance-guardrail.yml`, `agent-runner.yml` (dispatch-only).
+- `examples/pdm-workflow-templates/` — ready-to-copy actionlint-valid workflows: `quality-gate.yml`, `compliance-guardrail.yml`, `security-scan.yml`, `delivery-telemetry.yml`, `agent-runner.yml` (dispatch-only).
 - `examples/agent-skills-demo/` — skill-resolution demo + a dependency-free mocked `node:test` CI scaffold.
 
 Validate them offline, or let the quality gate do it on every PR:

@@ -1,0 +1,106 @@
+name: PDM Security Scan
+
+# Template: scheduled + on-demand secret & dependency-vulnerability scan.
+# Captures this repo's hard-earned gotchas so adopters don't rediscover them:
+#   - osv-scanner-action lives in the osv-scanner-action/ subdir; there is no
+#     `google/osv-scanner-action@v1` — use osv-scanner-action@v2.5.0.
+#   - osv-scanner v2 changed -r: use `scan-args: --recursive .` (never `-r=.`).
+#   - the OSV step only runs when dependency manifests exist (hashFiles);
+#     with none it is skipped — that is expected.
+#   - github-script injects context/github; never redeclare them.
+#   - gitleaks findings on schedule runs file an issue via the API.
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_ENABLE_COMMENTS: "false"
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  osv:
+    name: Vulnerability scan (OSV)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Vulnerability scan (OSV)
+        if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') != ''
+        uses: google/osv-scanner-action/osv-scanner-action@v2.5.0
+        with:
+          scan-args: |-
+            --recursive .
+
+      - name: Note skipped vulnerability scan
+        if: hashFiles('**/package-lock.json', '**/yarn.lock', '**/pnpm-lock.yaml', '**/requirements*.txt', '**/poetry.lock', '**/Pipfile.lock', '**/Cargo.lock', '**/go.sum', '**/Gemfile.lock', '**/composer.lock', '**/pom.xml', '**/build.gradle*') == ''
+        run: echo "No dependency manifests found; vulnerability scan skipped."
+
+  report:
+    name: Scan report
+    if: always()
+    needs: [gitleaks, osv]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Write scan report
+        shell: bash
+        env:
+          GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
+          OSV_RESULT: ${{ needs.osv.result }}
+        run: |
+          mkdir -p .github/pdm/reports
+          report_file=".github/pdm/reports/security-scan-$(date -u +%Y%m%d).md"
+          {
+            echo "## PDM Security Scan — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo ""
+            echo "- **Secrets scan (gitleaks)**: ${GITLEAKS_RESULT}"
+            echo "- **Dependency vulnerabilities (OSV)**: ${OSV_RESULT} (runs when manifests exist; otherwise skipped)"
+            echo "- **Event**: ${{ github.event_name }} — ref ${{ github.ref_name }}"
+            echo ""
+            echo "_Runs weekly (schedule) and on demand (workflow_dispatch). Review any findings and remediate; on schedule runs, blocking gitleaks findings also file an issue._"
+          } > "${report_file}"
+          cp "${report_file}" .github/pdm/reports/security-scan-latest.md
+          echo "Wrote ${report_file}"
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v7
+        with:
+          name: security-scan-report
+          path: .github/pdm/reports/security-scan-*.md
+          retention-days: 7
+
+      - name: Open issue on blocking secret findings
+        if: needs.gitleaks.result == 'failure' && github.event_name != 'workflow_dispatch'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[security-scan] gitleaks found secrets (${context.sha.slice(0, 7)})`,
+              body: 'gitleaks reported blocked secret findings on the default branch. See the scan report artifact for details, remediate, and re-run the scan via `workflow_dispatch`.',
+            });
