@@ -50,9 +50,9 @@ Pin the expected inventory in `scripts/examples-test.mjs` (E4) so a stale/rename
 
 ## Phase 4 — Publish adoption + telemetry docs
 
-- Wiki page `[[Workflow-Templates-Rollout]]` (docs are wiki-only, ADR 0013) linking the composite-action inputs/outputs, the template adoption path, and the rollout phases.
-- Wiki page `[[Telemetry-and-Cost]]` documenting the workflow-run metrics and the cost-estimate assumptions (sampled run minutes × published `ubuntu-latest` rate; public repos free; `insufficient-data` when the API is unreachable).
-- Update `README.md` links and the `examples/` READMEs to point at both pages.
+- [x] Wiki page `[[Workflow-Templates-Rollout]]` (docs are wiki-only, ADR 0013) linking the composite-action inputs/outputs, the template adoption path, and the rollout phases.
+- [x] Wiki page `[[Telemetry-and-Cost]]` documenting the workflow-run metrics and the cost-estimate assumptions (sampled run minutes × published `ubuntu-latest` rate; public repos free; `insufficient-data` when the API is unreachable).
+- [x] Update `README.md` links and the `examples/` READMEs to point at both pages.
 
 **Gate:** docs reviewed by the `docs` agent; links resolve.
 

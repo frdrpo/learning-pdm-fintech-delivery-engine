@@ -63,7 +63,7 @@ jobs:
           has_build_script: ${{ steps.detect.outputs.has_build_script }}
 ```
 
-Composite actions are validated structurally by `make test-examples` (E6) — actionlint 1.7.x does not lint `action.yml` metadata — and `make lint` keeps the workflow trees drift-free. See [`ROLLOUT.md`](ROLLOUT.md) for the phased migration plan.
+Composite actions are validated structurally by `make test-examples` (E6) — actionlint 1.7.x does not lint `action.yml` metadata — and `make lint` keeps the workflow trees drift-free. See [`ROLLOUT.md`](ROLLOUT.md) for the phased migration plan, and the wiki [Workflow-Templates-Rollout](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Workflow-Templates-Rollout) page for the adoption path and current phase status.
 
 ## Verification
 
