@@ -1,0 +1,69 @@
+name: PDM code quality
+description: >-
+  Run the frontend quality scripts (lint/typecheck/test/build) inside a project
+  directory, each gated on whether the project declares the script (pass the
+  has_*_script inputs from setup-pdm-toolchain outputs). A reusable building
+  block for quality gates and code-health jobs across repos.
+inputs:
+  project-dir:
+    description: Directory (relative to the workspace root) holding package.json
+    required: false
+    default: frontend
+  has_lint_script:
+    description: 'true when package.json declares a lint script (setup-pdm-toolchain output)'
+    required: false
+    default: 'false'
+  has_typecheck_script:
+    description: 'true when package.json declares a typecheck script (setup-pdm-toolchain output)'
+    required: false
+    default: 'false'
+  has_test_script:
+    description: 'true when package.json declares a test script (setup-pdm-toolchain output)'
+    required: false
+    default: 'false'
+  has_build_script:
+    description: 'true when package.json declares a build script (setup-pdm-toolchain output)'
+    required: false
+    default: 'false'
+  run-lint:
+    description: 'Set to false to skip the lint step entirely'
+    required: false
+    default: 'true'
+  run-typecheck:
+    description: 'Set to false to skip the typecheck step entirely'
+    required: false
+    default: 'true'
+  run-test:
+    description: 'Set to false to skip the test step entirely'
+    required: false
+    default: 'true'
+  run-build:
+    description: 'Set to false to skip the build step entirely'
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - name: Lint
+      if: inputs.run-lint == 'true' && inputs.has_lint_script == 'true'
+      shell: bash
+      working-directory: ${{ inputs.project-dir }}
+      run: pnpm run lint
+
+    - name: Typecheck
+      if: inputs.run-typecheck == 'true' && inputs.has_typecheck_script == 'true'
+      shell: bash
+      working-directory: ${{ inputs.project-dir }}
+      run: pnpm run typecheck
+
+    - name: Test
+      if: inputs.run-test == 'true' && inputs.has_test_script == 'true'
+      shell: bash
+      working-directory: ${{ inputs.project-dir }}
+      run: pnpm test
+
+    - name: Build
+      if: inputs.run-build == 'true' && inputs.has_build_script == 'true'
+      shell: bash
+      working-directory: ${{ inputs.project-dir }}
+      run: pnpm run build

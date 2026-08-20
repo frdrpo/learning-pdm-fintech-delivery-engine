@@ -40,6 +40,16 @@ jobs:
           node scripts/delivery-telemetry.mjs .github/pdm/reports
           ls -la .github/pdm/reports/delivery-*
 
+      - name: Run workflow-run telemetry & cost estimate
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          LOOKBACK_DAYS: '90'
+        run: |
+          node scripts/workflow-run-telemetry.mjs .github/pdm/reports
+          ls -la .github/pdm/reports/delivery-workflow-runs-*
+
       - name: Upload delivery telemetry & audit trail
         uses: actions/upload-artifact@v7
         with:

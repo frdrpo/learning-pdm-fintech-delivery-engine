@@ -10,7 +10,7 @@ This repository serves as a reference implementation for modern Product Delivery
 
 The delivery engine is **live and operating at cadence** — Phases 0–21 complete, no open gaps:
 
-- **10 canonical workflows** under `.github/pdm/workflows/` (7 core PR/release gates + `publish-pages` + `release-train-simulator` + `copykit-smoke`), mirrored byte-identically to `.github/workflows/` and verified by `make lint`.
+- **11 canonical workflows** under `.github/pdm/workflows/` (8 core PR/release gates + `publish-pages` + `release-train-simulator` + `copykit-smoke`), mirrored byte-identically to `.github/workflows/` and verified by `make lint`.
 - **Releases**: `v0.1.0`, `v0.2.0`, `v0.3.0` shipped via the milestone-gated `release-on-tag` pipeline. Train 2 (departs 08-31, cutoff 08-28) is pending — `v0.3.0` published early, inside train 1's window, so the on-time signal honestly stays 1/1 until a release publishes inside train 2's window `[08-31, 09-14)` (ADR 0009).
 - **Latest truthing readout** (P16-T4, 90d window, run 32115287697): deployment frequency dev 1.79/wk · staging/prod 1.56/wk · pages 2.88/wk; lead time median **6m** (11 PRs); change-failure rate **1.0%** (1/100 — the P10-T2 drill event only); MTTR proxy median **7h 15m** (1 event). The P21 close-out telemetry run (32205889156) confirmed the same numbers unchanged. Full readouts and history: see the [wiki ROADMAP](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/ROADMAP).
 - **Release train**: 14-day cadence (ADR 0009); train 3 departs **09-14** (cutoff 09-11), train 4 departs 09-28 — see the [Release Train Calendar](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Release-Train-Calendar).
@@ -25,11 +25,12 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 > **Note:** "PDM" here means Product Delivery Management, not the Python package manager.
 
 - `.github/pdm/workflows/` - Canonical workflow definitions (source of truth).
+  - `ai-agent-mvp.yml` - Issue #173 dry-run AI agent MVP: analyzes TS changes in a PR and posts *suggested* test scaffolds + a changelog snippet as a comment (mocked agent model; never commits).
   - `risk-health-check.yml` - Automates PR size tracking, code complexity analysis, and PDM risk reporting.
   - `compliance-guardrail.yml` - Enforces shift-left security scans and secret detection before code merges.
   - `quality-gate.yml` - Required status check: actionlint on workflows + toolchain-driven lint/test/build, aggregated into a single branch-protection gate.
   - `release-pipeline.yml` - Promotes builds through development/staging/production environments and records dry-run deployments.
-  - `delivery-telemetry.yml` - Exports the GitHub-native delivery audit trail and DORA-style telemetry as run artifacts (weekly + on demand).
+  - `delivery-telemetry.yml` - Exports the GitHub-native delivery audit trail and DORA-style telemetry as run artifacts (weekly + on demand), plus workflow-run metrics and an estimated runner cost (`scripts/workflow-run-telemetry.mjs`).
   - `security-rescan.yml` - Weekly + on-demand gitleaks/OSV re-scan; uploads a report artifact and files an issue on blocking schedule findings.
   - `release-on-tag.yml` - Milestone-gated releases: `workflow_dispatch` with a `version` cuts the release — requires a closed `v<version>` milestone, bumps `frontend/package.json` on `develop`, and opens the release PR `develop → main`. Merging it runs the real `release-pipeline`; a `v*` tag push on `main` publishes the GitHub Release (still milestone-gated).
   - `publish-pages.yml` - Publishes the static-exported frontend to GitHub Pages on every push to `develop` (the live `DEPLOY_VERIFY_URL` target).
@@ -38,6 +39,7 @@ All PDM workflow and deployment material is consolidated under a single folder, 
 - `.github/pdm/deployments/` - Dry-run deployment records uploaded as run artifacts by the release pipeline (not committed).
 - `.github/pdm/reports/` - Risk and quality-gate reports uploaded as run artifacts (not committed).
 - `.github/workflows/` - Mirrored execution copies of `.github/pdm/workflows/`. GitHub only executes workflows from this directory, so keep the copies in sync with `make sync`.
+- `.github/actions/` - Reusable composite actions (`setup-pdm-toolchain`, `pdm-code-quality`) — single-purpose building blocks for quality gates and code-health jobs, referenced by path (`uses: ./.github/actions/<name>`) so no mirroring is needed. Validated structurally by `make test-examples` (E6; actionlint 1.7.x does not lint `action.yml` metadata).
 - `agents/` - The canonical AI agent fleet (ADR 0015): five scrubbed, model-pin-free agent definitions (`pm`, `docs`, `software-engineer`, `junior-software-engineer`, `docs-reader`) installed into a local opencode runtime with `make fleet-sync`. Runtime config (providers/models, keys) stays local — `.opencode/` and `opencode.json` are gitignored; `agents/opencode.example.json` is the scrubbed template (`{env:...}` overridable).
 - `examples/` - Reference implementations and workflow templates for adopting the PDM framework and AI agent patterns (Issue #184): `fintech-agent-runner/` (scrubbed agent fleet + `fleet-sync`), `pdm-workflow-templates/` (actionlint-valid quality-gate/compliance/agent-runner templates), and `agent-skills-demo/` (skill-resolution demo + mocked `node:test` CI scaffold). Validated offline by `make test-examples`, wired into the quality gate.
 - `frontend/` - Next.js 16 website (App Router, TypeScript, Tailwind v4) — a dark fintech landing page with Vitest unit + component tests, plus a `/delivery` route rendering the live delivery-health snapshot (DORA metrics, release-train status, audit trail). This is the application the delivery gates exercise.

@@ -8,6 +8,10 @@
 //   4. the pdm-workflow-templates workflows parse as YAML and pass actionlint
 //   5. template invariants mirror the repo's gotchas: artifact uploads are
 //      guarded for PR-independent runs, or the trigger is dispatch-only
+//   6. composite actions under .github/actions/ are structurally valid
+//      (actionlint 1.7.x does NOT lint action.yml metadata, so this is a
+//      structural check: name/description/runs.using/inputs/outputs schema)
+//   7. canonical workflows only reference composite actions that exist
 //
 // Usage: node scripts/examples-test.mjs [--examples <dir>]
 // Exit 0 when every check passes; non-zero with a FAIL matrix otherwise.
@@ -31,18 +35,33 @@ function record(id, name, pass, detail = "") {
   console.log(`${pass ? "PASS" : "FAIL"}  ${id}  ${name}${detail ? `  — ${detail}` : ""}`);
 }
 
-function yamlKey(text, key) {
-  const m = text.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
-  return m ? m[1] : null;
-}
-
 const subprojects = () =>
   readdirSync(EXAMPLES, { withFileTypes: true })
     .filter((d) => d.isDirectory() && !d.name.startsWith("."))
     .map((d) => d.name);
 
+const finish = () => {
+  const summary = RESULTS.reduce(
+    (acc, r) => ({ pass: acc.pass + Number(r.pass), fail: acc.fail + Number(!r.pass) }),
+    { pass: 0, fail: 0 },
+  );
+  console.log(`\nSummary: ${summary.pass} pass, ${summary.fail} fail`);
+  process.exitCode = summary.fail === 0 ? 0 : 1;
+};
+
 // ---- 1. structure: README + expected top-levels ----
 (async () => {
+  if (!existsSync(EXAMPLES)) {
+    record("E1", "examples/ has >= 2 reference implementations", false, "examples/ missing");
+    record("E2", "fintech-agent-runner fleet test green (scrub rules, frontmatter)", false, "examples/ missing");
+    record("E3", "agent-skills-demo contract test green (mocked runner)", false, "examples/ missing");
+    record("E4", "pdm-workflow-templates has >= 1 template workflow", false, "examples/ missing");
+    record("E5", "template workflows pass actionlint", false, "examples/ missing");
+    record("E6", ".github/actions/ has >= 1 composite action", false, "examples/ missing");
+    record("E7", "canonical workflows reference existing composite actions", false, "examples/ missing");
+    finish();
+    return;
+  }
   const dirs = subprojects();
   record("E1", "examples/ has >= 2 reference implementations", dirs.length >= 2, dirs.join(", "));
 
@@ -92,7 +111,6 @@ const subprojects = () =>
     // actionlint is required in the quality-gate step and validates full YAML +
     // GitHub expressions. Here we do light structural checks first (zero-dep),
     // then actionlint for the strict parse.
-    let actionlintOk = false;
     for (const f of ymlFiles) {
       const abs = path.join(templatesDir, f);
       const text = readFileSync(abs, "utf8");
@@ -103,10 +121,8 @@ const subprojects = () =>
     try {
       execFileSync("actionlint", ymlFiles.map((f) => path.join("templates", f)),
         { cwd: path.join(EXAMPLES, "pdm-workflow-templates"), stdio: "pipe" });
-      actionlintOk = true;
       record("E5", "template workflows pass actionlint", true);
     } catch (e) {
-      actionlintOk = false;
       record("E5", "template workflows pass actionlint", false,
         String(e.stdout ?? e.message).split("\n").slice(-6).join(" "));
     }
@@ -125,17 +141,86 @@ const subprojects = () =>
         !prTriggered || guarded,
       );
     }
-    void actionlintOk;
   } else {
     record("E4", "pdm-workflow-templates has >= 1 template workflow", false, "missing templates/");
     record("E5", "template workflows pass actionlint", false, "missing templates/");
   }
 
-  // ---- Report ----
-  const summary = RESULTS.reduce(
-    (acc, r) => ({ pass: acc.pass + Number(r.pass), fail: acc.fail + Number(!r.pass) }),
-    { pass: 0, fail: 0 },
+  // ---- 6. composite actions under .github/actions/ ----
+  // actionlint 1.7.x treats action.yml as a workflow and rejects composite
+  // metadata, so composite actions get structural checks instead: required
+  // keys, runs.using: composite, >= 1 step, and inputs/outputs schema.
+  const actionsDir = path.join(ROOT, ".github", "actions");
+  const actionDirs = existsSync(actionsDir)
+    ? readdirSync(actionsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && !d.name.startsWith("."))
+        .map((d) => d.name)
+    : [];
+  record("E6", ".github/actions/ has >= 1 composite action", actionDirs.length >= 1, actionDirs.join(", ") || "missing");
+
+  const blockAfter = (text, key) => {
+    const m = text.match(new RegExp(`^${key}:\\s*$\\n([\\s\\S]*?)(?=^\\S|$)`));
+    return m ? m[1] : "";
+  };
+  const keyLines = (block) => [...block.matchAll(/^\s{2}(\S[^:]*):\s*$/gm)].map((m) => m[1]);
+
+  for (const name of actionDirs) {
+    const actionFile = path.join(actionsDir, name, "action.yml");
+    if (!existsSync(actionFile)) {
+      record(`E6-${name}-file`, `${name}/action.yml exists`, false, "missing action.yml");
+      continue;
+    }
+    const text = readFileSync(actionFile, "utf8");
+    record(`E6-${name}-name`, `${name} has name:`, /^name:\s*\S/m.test(text));
+    record(`E6-${name}-desc`, `${name} has description:`, /^description:\s*\S/m.test(text));
+    record(
+      `E6-${name}-composite`,
+      `${name} is a composite action (runs.using: composite)`,
+      /^runs:\s*$/m.test(text) && /using:\s*composite/.test(text),
+    );
+    record(`E6-${name}-steps`, `${name} has >= 1 step`, /^\s+- name:\s*\S/m.test(text));
+
+    const inputKeys = keyLines(blockAfter(text, "inputs"));
+    const outputKeys = keyLines(blockAfter(text, "outputs"));
+    if (inputKeys.length > 0) {
+      const inputBlock = blockAfter(text, "inputs");
+      record(
+        `E6-${name}-inputs`,
+        `${name} inputs each have a description`,
+        inputKeys.every((k) => new RegExp(`^\\s{4}description:`).test(inputBlock)),
+      );
+    }
+    if (outputKeys.length > 0) {
+      const outputBlock = blockAfter(text, "outputs");
+      record(
+        `E6-${name}-outputs`,
+        `${name} outputs each have a value`,
+        outputKeys.every((k) => new RegExp(`^\\s{4}value:`).test(outputBlock)),
+      );
+    }
+  }
+
+  // ---- 7. canonical workflows only reference actions that exist ----
+  const canonicalDir = path.join(ROOT, ".github", "pdm", "workflows");
+  const wfFiles = existsSync(canonicalDir)
+    ? readdirSync(canonicalDir).filter((f) => f.endsWith(".yml"))
+    : [];
+  const actionRefs = [];
+  for (const f of wfFiles) {
+    const text = readFileSync(path.join(canonicalDir, f), "utf8");
+    for (const m of text.matchAll(/uses:\s*\.\/\.github\/actions\/([\w-]+)/g)) {
+      actionRefs.push({ file: f, action: m[1] });
+    }
+  }
+  record(
+    "E7",
+    "canonical workflows reference existing composite actions",
+    actionRefs.every((r) => existsSync(path.join(actionsDir, r.action, "action.yml"))),
+    actionRefs.length === 0
+      ? "no references yet (vacuous until rollout phase 2)"
+      : actionRefs.map((r) => `${r.file}->${r.action}`).join(", "),
   );
-  console.log(`\nSummary: ${summary.pass} pass, ${summary.fail} fail`);
-  process.exitCode = summary.fail === 0 ? 0 : 1;
+
+  // ---- Report ----
+  finish();
 })();

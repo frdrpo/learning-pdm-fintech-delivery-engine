@@ -12,6 +12,8 @@ Reference implementations and workflow templates for adopting the PDM framework 
 | [`pdm-workflow-templates/`](pdm-workflow-templates/) | Ready-to-copy GitHub Actions workflow templates: a quality gate, a compliance guardrail, and a `workflow_dispatch` agent-runner job. Validated with actionlint by the integration test. | You want the PR gates in a fresh repo without rewriting the workflows from scratch. |
 | [`agent-skills-demo/`](agent-skills-demo/) | A skill-consumption demo + a dependency-free `node:test` scaffold showing how to add "mocked integration tests that run example workflows in CI." | You want the agent skills pattern plus a no-install test scaffold for validating workflow contracts. |
 
+The repo also ships **reusable composite actions** under `.github/actions/` (`setup-pdm-toolchain`, `pdm-code-quality`) — single-purpose building blocks for any workflow, validated structurally by the integration test (E6). See [`pdm-workflow-templates/README.md`](pdm-workflow-templates/README.md) for the adoption pattern and [`pdm-workflow-templates/ROLLOUT.md`](pdm-workflow-templates/ROLLOUT.md) for the phased migration plan.
+
 ## Adoption path (5 minutes)
 
 1. Pick the subproject that matches your gap (agent fleet, workflow templates, or skills + test scaffold).

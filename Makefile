@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path test-examples test-agent-runner topology-check topology-apply
+.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path test-examples test-scripts test-agent-runner topology-check topology-apply
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -39,6 +39,9 @@ test-frontend:
 
 # Validate workflow YAML syntax + expressions (no Docker required),
 # and fail if the GitHub execution copies have drifted from canonical.
+# Note: actionlint 1.7.x does NOT lint composite action metadata
+# (.github/actions/*/action.yml) — those are validated structurally by
+# 'make test-examples' (E6), which runs in the quality-gate workflow-lint job.
 lint:
 	actionlint $(PDM_WF)/*.yml $(GH_WF)/*.yml
 	@if diff -r $(PDM_WF) $(GH_WF) >/dev/null 2>&1; then \
@@ -74,9 +77,16 @@ test-consumer-path:
 
 # Issue #184 — validate the examples/ deliverables offline (READMEs + structure,
 # agent scrub-rules, workflow template actionlint + artifact-guard invariants,
-# mocked "agent runner" contract test). Runs in the quality-gate workflow-lint job.
+# composite-action structural checks, mocked "agent runner" contract test).
+# Runs in the quality-gate workflow-lint job.
 test-examples:
 	@node scripts/examples-test.mjs
+
+# Unit tests for the delivery-engine scripts (scripts/test/*.test.mjs) —
+# currently the workflow-run telemetry & cost estimator. Runs in the
+# quality-gate workflow-lint job alongside test-examples.
+test-scripts:
+	@node --test scripts/test/*.test.mjs
 
 # Issue #173 — unit + end-to-end tests for the dry-run AI agent runner
 # (ops/agent-runner): diff parsing, test-scaffold + changelog generation, mock

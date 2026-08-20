@@ -91,6 +91,11 @@ jobs:
           else
             echo "has_test_script=false" >> "$GITHUB_OUTPUT"
           fi
+          if [[ -f package.json ]] && grep -q '"build":' package.json; then
+            echo "has_build_script=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_build_script=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Show health summary
         if: steps.detect.outputs.found != 'true'
