@@ -64,72 +64,20 @@ jobs:
 
       - name: Detect frontend toolchain
         id: detect
-        shell: bash
-        run: |
-          if [[ -f package.json ]]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -f pnpm-lock.yaml ]]; then
-            echo "has_lockfile=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_lockfile=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -f package.json ]] && grep -q '"lint":' package.json; then
-            echo "has_lint_script=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_lint_script=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -f package.json ]] && grep -q '"typecheck":' package.json; then
-            echo "has_typecheck_script=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_typecheck_script=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -f package.json ]] && grep -q '"test":' package.json; then
-            echo "has_test_script=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_test_script=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [[ -f package.json ]] && grep -q '"build":' package.json; then
-            echo "has_build_script=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_build_script=false" >> "$GITHUB_OUTPUT"
-          fi
+        uses: ./.github/actions/setup-pdm-toolchain
 
       - name: Show health summary
         if: steps.detect.outputs.found != 'true'
         run: echo "No frontend toolchain detected; code-health check passes by default."
 
-      - name: Set up pnpm
-        if: steps.detect.outputs.has_lockfile == 'true'
-        uses: pnpm/action-setup@v6
+      - name: Run code health (lint/typecheck/test)
+        uses: ./.github/actions/pdm-code-quality
         with:
-          version: 11.21.0
-
-      - name: Set up Node.js
-        if: steps.detect.outputs.has_lockfile == 'true'
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-
-      - name: Install dependencies
-        if: steps.detect.outputs.has_lockfile == 'true'
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint
-        if: steps.detect.outputs.has_lint_script == 'true'
-        run: pnpm run lint
-
-      - name: Typecheck
-        if: steps.detect.outputs.has_typecheck_script == 'true'
-        run: pnpm run typecheck
-
-      - name: Test
-        if: steps.detect.outputs.has_test_script == 'true'
-        run: pnpm test
+          run-build: 'false'
+          has_lint_script: ${{ steps.detect.outputs.has_lint_script }}
+          has_typecheck_script: ${{ steps.detect.outputs.has_typecheck_script }}
+          has_test_script: ${{ steps.detect.outputs.has_test_script }}
+          has_build_script: ${{ steps.detect.outputs.has_build_script }}
 
   risk-review:
     name: Diff Risk Review (AI-assisted)
