@@ -1,7 +1,7 @@
 PDM_WF    := .github/pdm/workflows
 GH_WF     := .github/workflows
 
-.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path test-examples topology-check topology-apply
+.PHONY: lint sync sync-deps fleet-sync test-frontend test-gh test-consumer-path test-examples test-agent-runner topology-check topology-apply
 
 # Mirror canonical workflows into .github/workflows (GitHub only executes there)
 sync:
@@ -77,6 +77,13 @@ test-consumer-path:
 # mocked "agent runner" contract test). Runs in the quality-gate workflow-lint job.
 test-examples:
 	@node scripts/examples-test.mjs
+
+# Issue #173 — unit + end-to-end tests for the dry-run AI agent runner
+# (ops/agent-runner): diff parsing, test-scaffold + changelog generation, mock
+# model, telemetry, and a full CLI run on a sample PR payload. Runs in the
+# ai-agent-mvp workflow before any comment/artifact step.
+test-agent-runner:
+	@node --test ops/agent-runner/test/*.test.mjs
 
 # Kit §2: idempotent topology check/apply against the live repo (gh CLI).
 # `make topology-check` verifies the documented target state; `make topology-apply`

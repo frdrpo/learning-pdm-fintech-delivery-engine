@@ -1,0 +1,138 @@
+name: PDM AI Agent MVP (dry-run)
+
+# Docs: ADR 0017 (wiki), runbook at ops/agent-runner/README.md.
+# Issue #173 MVP: analyze TS changes in a PR and post *suggested* test
+# scaffolds + a changelog snippet as a comment. Dry-run only: no commits, no
+# pushes, no merges. The pilot uses a mocked agent model (mock-model.mjs).
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run mode (default true; MVP is always advisory)"
+        type: boolean
+        default: true
+        required: true
+      include_js:
+        description: "Also analyze .js/.jsx files (default: TS only)"
+        type: boolean
+        default: false
+        required: false
+      sample_cargo_payload:
+        description: "Optional path to a sample PR-files JSON to analyze on a dispatch run (MVP e2e)"
+        type: string
+        default: ""
+        required: false
+
+concurrency:
+  group: ai-agent-mvp-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  agent-mvp:
+    name: AI Agent MVP (dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run agent-runner unit + e2e tests
+        shell: bash
+        run: node --test ops/agent-runner/test/*.test.mjs
+
+      - name: Build agent input payload
+        id: input
+        shell: bash
+        run: |
+          mkdir -p .github/pdm/reports
+
+      - name: Fetch PR files payload
+        id: fetch
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const pr = context.payload.pull_request;
+            if (pr) {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+              const payload = {
+                number: pr.number,
+                title: pr.title,
+                includeJs: false,
+                files: files.map((f) => ({
+                  filename: f.filename,
+                  status: f.status,
+                  additions: f.additions,
+                  deletions: f.deletions,
+                  patch: f.patch,
+                })),
+              };
+              fs.writeFileSync('.github/pdm/reports/ai-agent-input.json', JSON.stringify(payload, null, 2));
+              console.log(`Fetched ${files.length} PR files for #${pr.number}`);
+            } else {
+              fs.writeFileSync('.github/pdm/reports/ai-agent-input.json', JSON.stringify({ number: null, title: null, files: [] }));
+              console.log('No PR context; dispatch dry-run will use the sample payload when provided.');
+            }
+
+      - name: Run agent runner (mocked model, dry-run)
+        id: run
+        shell: bash
+        run: |
+          INPUT=.github/pdm/reports/ai-agent-input.json
+          if [[ "${{ github.event.pull_request.number }}" == "" && -n "${{ inputs.sample_cargo_payload }}" ]]; then
+            INPUT="${{ inputs.sample_cargo_payload }}"
+          fi
+          node ops/agent-runner/runner.mjs --files "$INPUT" --out .github/pdm/reports/ai-agent-report.json
+          echo "Runner exit: $?"
+          node -e "const r=require('./.github/pdm/reports/ai-agent-report.json'); console.log('telemetry:', JSON.stringify(r.telemetry));"
+
+      - name: Render suggestion comment body
+        id: render
+        shell: bash
+        run: node ops/agent-runner/render-comment.mjs .github/pdm/reports/ai-agent-report.json /tmp/ai-agent-comment.md
+
+      - name: Post suggestion comment
+        if: github.event.pull_request.number != null && steps.run.outcome == 'success'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('/tmp/ai-agent-comment.md', 'utf8');
+            const resp = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
+            console.log(`Posted dry-run suggestion comment ${resp.data.id}`);
+
+      - name: Upload agent report
+        if: always() && github.event.pull_request.number == null
+        uses: actions/upload-artifact@v7
+        with:
+          name: ai-agent-mvp-report
+          path: .github/pdm/reports/ai-agent-report.json
+          retention-days: 7
