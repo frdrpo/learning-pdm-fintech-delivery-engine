@@ -41,10 +41,9 @@ Steps per workflow:
 
 Add whole-workflow templates for the patterns still missing from `examples/pdm-workflow-templates/templates/`:
 
-- `security-scan.yml` — gitleaks + OSV scan capturing the hard-earned gotchas (`google/osv-scanner-action/osv-scanner-action@v2.5.0`, `scan-args: --recursive .`, `hashFiles` gating).
-- `delivery-telemetry.yml` — the DORA + workflow-run telemetry exporter pattern.
-
-Pin the expected inventory in `scripts/examples-test.mjs` (E4) so a stale/renamed template fails the gate.
+- [x] `security-scan.yml` — gitleaks + OSV scan capturing the hard-earned gotchas (`google/osv-scanner-action/osv-scanner-action@v2.5.0`, `scan-args: --recursive .`, `hashFiles` gating).
+- [x] `delivery-telemetry.yml` — the DORA + workflow-run telemetry exporter pattern.
+- [x] Pin the expected inventory in `scripts/examples-test.mjs` (E4) so a stale/renamed template fails the gate.
 
 **Gate:** `make test-examples` with the new inventory pins; actionlint clean.
 

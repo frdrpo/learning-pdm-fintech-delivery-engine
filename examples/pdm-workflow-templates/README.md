@@ -8,7 +8,11 @@ Reusable GitHub Actions workflow templates for adopting the PDM delivery gates i
 |---|---|---|
 | `templates/quality-gate.yml` | pull_request (develop/main) + dispatch | actionlint on workflows + code-quality steps behind toolchain detection (the required `main` branch-protection check) |
 | `templates/compliance-guardrail.yml` | pull_request + dispatch | trufflehog base..head secret/compliance scan, pass/fail PR comment (guarded on `pull_request.number`) |
+| `templates/security-scan.yml` | schedule + dispatch | weekly gitleaks + OSV re-scan of the default branch (the `google/osv-scanner-action/osv-scanner-action@v2.5.0` + `--recursive .` gotchas, `hashFiles` manifest gating, issue filed on blocking gitleaks findings) |
+| `templates/delivery-telemetry.yml` | schedule + dispatch | weekly DORA + workflow-run telemetry export as run artifacts (the `scripts/delivery-telemetry.mjs` + `scripts/workflow-run-telemetry.mjs` pattern, honest `insufficient-data`) |
 | `templates/agent-runner.yml` | dispatch only | run an opencode agent fleet step (a `make fleet-sync` + agent-invocation example), artifact upload, no PR trigger by construction |
+
+The inventory is pinned in `scripts/examples-test.mjs` (E4-inventory) so a stale or renamed template fails the gate.
 
 Reference versions of `quality-gate` and `compliance-guardrail` live and verified in this repo under `.github/pdm/workflows/`. `agent-runner` is dispatch-only by construction (no PR trigger), so it has no direct canonical counterpart — the closest live reference is `ai-agent-mvp.yml` (PR + dispatch, runs the `ops/agent-runner` tests).
 

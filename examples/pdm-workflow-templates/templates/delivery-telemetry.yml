@@ -1,0 +1,64 @@
+name: PDM Delivery Telemetry
+
+# Template: weekly (plus on-demand) export of GitHub-native delivery telemetry
+# and workflow-run metrics as run artifacts (ADR 0008 / ADR 0006 pattern).
+#   - Reads the Deployments/Releases/Pulls/Issues + Actions runs APIs with the
+#     built-in GITHUB_TOKEN (no external observability service, no new secrets).
+#   - Scans with no matching events are reported `insufficient-data`, never
+#     invented numbers (telemetry-honesty).
+#   - Artifacts are uploaded from the same job that wrote them (cross-job files
+#     do not persist on GitHub), and only on non-PR / schedule runs.
+#   - Requires scripts/delivery-telemetry.mjs + scripts/workflow-run-telemetry.mjs.
+
+on:
+  schedule:
+    - cron: '30 2 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: delivery-telemetry
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry:
+    name: Collect delivery & workflow-run telemetry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Run delivery telemetry & audit trail exporter
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          LOOKBACK_DAYS: '90'
+        run: |
+          mkdir -p .github/pdm/reports
+          node scripts/delivery-telemetry.mjs .github/pdm/reports
+          ls -la .github/pdm/reports/delivery-*
+
+      - name: Run workflow-run telemetry & cost estimate
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          LOOKBACK_DAYS: '90'
+        run: |
+          node scripts/workflow-run-telemetry.mjs .github/pdm/reports
+          ls -la .github/pdm/reports/delivery-workflow-runs-*
+
+      - name: Upload delivery telemetry & audit trail
+        uses: actions/upload-artifact@v7
+        with:
+          name: delivery-telemetry
+          path: .github/pdm/reports/delivery-*
+          retention-days: 7

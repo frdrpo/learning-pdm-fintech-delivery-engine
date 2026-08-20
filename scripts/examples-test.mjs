@@ -6,6 +6,7 @@
 //   2. the fintech-agent-runner fleet passes its own scrub-rule test
 //   3. the agent-skills-demo contract test passes (mocked "agent runner")
 //   4. the pdm-workflow-templates workflows parse as YAML and pass actionlint
+//      (inventory is pinned to the expected template set — Issue #185)
 //   5. template invariants mirror the repo's gotchas: artifact uploads are
 //      guarded for PR-independent runs, or the trigger is dispatch-only
 //   6. composite actions under .github/actions/ are structurally valid
@@ -22,6 +23,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+// Expected whole-workflow template inventory (Issue #185 Phase 3). A stale or
+// renamed template fails E4-inventory so adopters keep an up-to-date copy-me set.
+const TEMPLATE_INVENTORY = [
+  "agent-runner.yml",
+  "compliance-guardrail.yml",
+  "delivery-telemetry.yml",
+  "quality-gate.yml",
+  "security-scan.yml",
+];
 const EXAMPLES = path.resolve(
   process.argv.indexOf("--examples") >= 0
     ? process.argv[process.argv.indexOf("--examples") + 1]
@@ -107,6 +118,12 @@ const finish = () => {
   if (existsSync(templatesDir)) {
     const ymlFiles = readdirSync(templatesDir).filter((f) => f.endsWith(".yml"));
     record("E4", "pdm-workflow-templates has >= 1 template workflow", ymlFiles.length >= 1);
+    record(
+      "E4-inventory",
+      "template inventory matches the pinned set (Issue #185)",
+      JSON.stringify([...ymlFiles].sort()) === JSON.stringify(TEMPLATE_INVENTORY),
+      ymlFiles.sort().join(", ") || "missing",
+    );
 
     // actionlint is required in the quality-gate step and validates full YAML +
     // GitHub expressions. Here we do light structural checks first (zero-dep),
