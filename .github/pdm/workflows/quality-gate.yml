@@ -40,6 +40,11 @@ jobs:
           export PATH="$GITHUB_WORKSPACE:$PATH"
           node scripts/examples-test.mjs
 
+      - name: Run delivery-engine script unit tests
+        shell: bash
+        run: |
+          node --test scripts/test/*.test.mjs
+
   code-quality:
     name: Code Quality (lint/typecheck/test/build)
     runs-on: ubuntu-latest
