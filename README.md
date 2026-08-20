@@ -166,7 +166,7 @@ Validate them offline, or let the quality gate do it on every PR:
 make test-examples   # README/structure + fleet scrub rules + template actionlint/guards + mock contract test
 ```
 
-To adopt: copy a subproject into your repo, follow its `README.md` (cp commands + renames), then run `make test-examples` and (for templates) `make sync`/`make lint`. See the [wiki Examples and Templates page](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Examples-and-Templates).
+To adopt: copy a subproject into your repo, follow its `README.md` (cp commands + renames), then run `make test-examples` and (for templates) `make sync`/`make lint`. See the [wiki Examples and Templates page](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Examples-and-Templates) and the [Workflow-Templates-Rollout](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Workflow-Templates-Rollout) page (Issue #185) for the reusable composite actions and the phased migration plan.
 
 ## Frontend Testing
 
@@ -190,4 +190,6 @@ The **project wiki** is the canonical, always-current docs home (since the 2026-
 - [Architecture](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Architecture) — workflow map, PR-gate pipeline diagram, promotion chain, canonical/mirror layout.
 - [Local-Runbook](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Local-Runbook) — Native Runbook: testing the delivery engine on GitHub (`make sync`/`lint`/`test-gh`, `workflow_dispatch`, troubleshooting).
 - [Agent-Guide](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Agent-Guide) — contributor and agent guide (extended `AGENTS.md` with the hard-earned gotchas).
+- [Workflow-Templates-Rollout](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Workflow-Templates-Rollout) — reusable workflows & composite actions (Issue #185 rollout).
+- [Telemetry-and-Cost](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Telemetry-and-Cost) — delivery + workflow-run metrics and cost-estimate assumptions.
 - [Decision-Log](https://github.com/frdrpo/learning-pdm-fintech-delivery-engine/wiki/Decision-Log) — ADR decision log for the delivery engine (ADR 0001–0013).

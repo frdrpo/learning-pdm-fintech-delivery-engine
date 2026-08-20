@@ -28,5 +28,7 @@ The repo also ships **reusable composite actions** under `.github/actions/` (`se
 ## Links
 
 - Wiki: [[Examples-and-Templates]] — usage guide and the rationale behind each example.
+- Wiki: [[Workflow-Templates-Rollout]] — reusable actions + templates and the phased rollout (Issue #185).
+- Wiki: [[Telemetry-and-Cost]] — delivery + workflow-run metrics and cost-estimate assumptions.
 - Reference architecture: [[Architecture]], copy-checklist: [[Engine-Copy-Kit]].
 - Agent-fleet canon: [`agents/`](../agents/) (ADR 0015).
