@@ -58,8 +58,15 @@ function main() {
     const options = { includeJs: Boolean(input.includeJs ?? false) };
 
     // Refuse secret-looking payloads before they reach a model (mock or real).
-    assertNoSecrets(input.files ?? []);
+    // The guard applies to the in-scope TS content that is actually analyzed,
+    // not to out-of-scope files such as the repo's own test fixtures that
+    // intentionally carry credential-shaped literals (data policy, ADR 0017).
     const files = analyzeChangedFiles(input.files ?? [], options);
+    const scopedForSecrets = files.map((f) => ({
+      filepath: f.filepath,
+      patch: f.added.join("\n"),
+    }));
+    assertNoSecrets(scopedForSecrets);
     tel.recordCall("mock-v1");
     const suggestions = mockModelSuggest(files, {
       number: input.number,
@@ -84,9 +91,9 @@ function main() {
       error: String(err?.message ?? err),
       telemetry: tel.snapshot(startedAt),
     };
-    const body = JSON.stringify(result, null, 2);
+const body = JSON.stringify(result, null, 2);
     if (args.out) writeFileSync(args.out, body, "utf8");
-    else process.stdout.write(body + "\n");
+    process.stdout.write(body + "\n");
     process.exitCode = 1;
   }
 }
